@@ -47,6 +47,11 @@ public abstract class Router {
                 PrintWriter out = response.getWriter();
                 out.print(plainText.getText());
                 out.close();
+            } else if (result instanceof JsonResult json) {
+                response.setContentType("application/json");
+                PrintWriter out = response.getWriter();
+                out.println(json.getJson());
+                out.close();
             }
         } catch (BadRequestException ex) {
             this.getLogger().info(ex.getMessage());

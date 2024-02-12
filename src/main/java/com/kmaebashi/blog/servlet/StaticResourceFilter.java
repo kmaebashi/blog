@@ -15,7 +15,7 @@ public class StaticResourceFilter implements Filter {
         String path = req.getRequestURI().substring(req.getContextPath().length());
         if (path.length() == 0 || path.equals("/")) {
             request.getRequestDispatcher("/index.html").forward(request, response);
-        } else if (path.endsWith(".css") || path.endsWith(".jpg")) {
+        } else if (path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".jpg")) {
             chain.doFilter(request, response);
         } else {
             request.getRequestDispatcher(path + ".do").forward(request, response);

@@ -6,8 +6,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 
+import com.kmaebashi.blog.controller.ImageController;
 import com.kmaebashi.blog.controller.LoginController;
+import com.kmaebashi.blog.controller.AdminController;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.RoutingResult;
@@ -20,10 +23,14 @@ import com.kmaebashi.simplelogger.Logger;
 public class BlogRouter extends Router {
     private ServletContext servletContext;
     private Logger logger;
+    private ResourceBundle resourceBundle;
+    private Path imageRoot;
 
-    public BlogRouter(ServletContext servletContext, Logger logger) {
+    public BlogRouter(ServletContext servletContext, Logger logger, ResourceBundle rb) {
         this.servletContext = servletContext;
         this.logger = logger;
+        this.resourceBundle = rb;
+        this.imageRoot = Paths.get(rb.getString("blog.image-directory"));
     }
 
     @Override
@@ -47,9 +54,16 @@ public class BlogRouter extends Router {
             if (route == Route.ADMIN) {
                 if (currentUserId == null) {
                     result = LoginController.showPage(invoker, path);
+                } else {
+                    result = AdminController.showPage(invoker, params);
                 }
             }
         } else if (request.getMethod().equals("POST")) {
+            if (route == Route.DO_LOGIN) {
+                result = LoginController.doLogin(invoker);
+            } else if (route == Route.POST_IMAGES && currentUserId != null) {
+                result = ImageController.postImages(invoker, this.imageRoot);
+            }
         }
         this.logger.info("doRouting end.");
 

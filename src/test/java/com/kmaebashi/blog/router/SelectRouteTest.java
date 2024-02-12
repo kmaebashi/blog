@@ -48,4 +48,17 @@ class SelectRouteTest {
         assertEquals("kmaebashi", params.get("blog_id"));
         assertEquals(123, params.get("blog_post_id"));
     }
+    @Test
+    void selectTest006() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("api/dologin", params);
+        assertEquals(Route.DO_LOGIN, route);
+    }
+
+    @Test
+    void selectTest007() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("api/postimages", params);
+        assertEquals(Route.POST_IMAGES, route);
+    }
 }

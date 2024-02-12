@@ -46,6 +46,12 @@ public class SelectRoute {
                 params.put("blog_post_id", postId);
                 return Route.ADMIN;
             }
+            if (path.equals("api/dologin")) {
+                return Route.DO_LOGIN;
+            }
+            if (path.equals("api/postimages")) {
+                return Route.POST_IMAGES;
+            }
         } catch (Exception ex) {
             throw new BadRequestException("クエリストリングが不正です。");
         }

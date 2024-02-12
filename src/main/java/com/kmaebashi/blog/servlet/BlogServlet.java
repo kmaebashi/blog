@@ -4,6 +4,7 @@ import com.kmaebashi.blog.router.BlogRouter;
 import com.kmaebashi.nctfw.InternalException;
 import com.kmaebashi.simplelogger.Logger;
 import com.kmaebashi.simpleloggerimpl.FileLogger;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ResourceBundle;
 
+@MultipartConfig
 public class BlogServlet extends HttpServlet {
     private BlogRouter router;
     private Logger logger;
@@ -22,7 +24,7 @@ public class BlogServlet extends HttpServlet {
         } catch (IOException ex) {
             throw new InternalException("ログファイルの作成に失敗しました。", ex);
         }
-        this.router = new BlogRouter(this.getServletContext(), this.logger);
+        this.router = new BlogRouter(this.getServletContext(), this.logger, rb);
     }
 
     protected void service(HttpServletRequest request, HttpServletResponse response) {

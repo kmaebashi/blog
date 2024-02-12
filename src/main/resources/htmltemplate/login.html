@@ -7,15 +7,16 @@
   </head>
   <h1>ログイン画面</h1>
   <body>
-    <form>
+    <form action="/blog/api/dologin" method="POST">
+      <span id="login-error-message"></span>
       <table>
         <tr>
           <td>ユーザID</td>
-          <td><input type="text" size="20"></td>
+          <td><input type="text" name="userid" size="20"></td>
         </tr>
         <tr>
           <td>パスワード</td>
-          <td><input type="password" size="20"></td>
+          <td><input type="password" name="password" size="20"></td>
         </tr>
       </table>
       <p><button id="login_button">ログイン</button></p>
