@@ -1,0 +1,8 @@
+#container-horizontal {
+  display: flex;
+  gap: 7px;
+  flex-direction: row-reverse;
+  background-color: #d5e0f1;
+  margin: 10px 0px;
+  justify-content: flex-end;
+}
