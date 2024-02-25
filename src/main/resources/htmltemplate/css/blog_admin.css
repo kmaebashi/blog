@@ -91,6 +91,11 @@ textarea.section-text {
   height: 200px;
 }
 
-p.photo {
-  margin: 0.5em auto;
+textarea.photo-caption {
+  width: 500px;
+  height: 80px;
+}
+
+div.one-photo {
+  margin: 0px auto 1em;
 }

@@ -12,7 +12,8 @@ public class SelectRoute {
     private static Pattern idPattern = Pattern.compile("^\\w+$");
     private static Pattern postPattern = Pattern.compile("^(\\w+)/post/(\\d+)$");
     private static Pattern adminPattern = Pattern.compile("^(\\w+)/admin$");
-    private static Pattern adminPostPattern = Pattern.compile("(^\\w+)/admin/(\\d*)$");
+    private static Pattern postImagesPattern = Pattern.compile("^(\\w+)/api/postimages$");
+    private static Pattern getImageAdminPattern = Pattern.compile("^(\\w+)/api/getimageadmin/(\\d*)$");
 
     static Route select(String path, HashMap<String, Object> params) {
         try {
@@ -38,19 +39,23 @@ public class SelectRoute {
                 params.put("blog_id", matcher.group(1));
                 return Route.ADMIN;
             }
-            matcher = adminPostPattern.matcher(path);
+            matcher = postImagesPattern.matcher(path);
             if (matcher.matches()) {
-                params.put("blog_id", matcher.group(1));
-                String postIdStr = matcher.group(2);
-                int postId = Integer.parseInt(postIdStr);
-                params.put("blog_post_id", postId);
-                return Route.ADMIN;
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                return Route.POST_IMAGES;
+            }
+            matcher = getImageAdminPattern.matcher(path);
+            if (matcher.matches()) {
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                String photoIdStr = matcher.group(2);
+                int photoId = Integer.parseInt(photoIdStr);
+                params.put("photo_id", photoId);
+                return Route.GET_IMAGE_ADMIN;
             }
             if (path.equals("api/dologin")) {
                 return Route.DO_LOGIN;
-            }
-            if (path.equals("api/postimages")) {
-                return Route.POST_IMAGES;
             }
         } catch (Exception ex) {
             throw new BadRequestException("クエリストリングが不正です。");

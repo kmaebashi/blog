@@ -66,6 +66,7 @@ public class AdminService {
         Element sectionContainerElem = doc.getElementById("section-container");
         Element newSectionElem = templateSectionElem.clone();
         newSectionElem.removeAttr("style");
+        newSectionElem.attr("id", "section-box1");
         Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
         fileInputElem.attr("data-section", "1");
         sectionContainerElem.appendChild(newSectionElem);

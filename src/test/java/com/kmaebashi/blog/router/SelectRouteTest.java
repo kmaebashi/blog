@@ -61,4 +61,14 @@ class SelectRouteTest {
         Route route = SelectRoute.select("api/postimages", params);
         assertEquals(Route.POST_IMAGES, route);
     }
+
+    @Test
+    void selectTest008() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("/api/getimageadmin/28", params);
+        assertEquals(Route.GET_IMAGE_ADMIN, route);
+        int photoId = (int)params.get("photo_id");
+        assertEquals(28, photoId);
+    }
+
 }

@@ -6,5 +6,7 @@ public enum Route {
     ADMIN,
     DO_LOGIN,
     POST_IMAGES,
+    GET_IMAGE_ADMIN,
+    POST_ARTICLE,
     NO_ROUTE
 }

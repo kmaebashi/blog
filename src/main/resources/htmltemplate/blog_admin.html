@@ -22,8 +22,9 @@
         <div id="container-main">
           <p>記事タイトル：<input type="text" id="blog-post-title" size="40" value="緑のAACR 2022に参加してきました"></p>
           <div id="hidden-section-box" class="section-box" style="display:none">
-            <p>セクション1</p>
+            <p class="section-title">セクション1</p>
             <div><textarea class="section-text"></textarea></div>
+            <div class="photo-area"></div>
             <label for="input">画像をアップロード：</label>
             <input type="file" class="image-file-input" name="image-data" multiple="multiple">
           </div>
@@ -53,7 +54,7 @@
               <input type="file" data-section="2"  class="image-file-input" name="image-data" multiple="multiple">
             </div>
           </div>
-          <p><button>セクションの追加</button></p>
+          <p><button id="add-section-button">セクションの追加</button></p>
           <p>
             <button>下書き保存する</button>
             <button>公開する</button>

@@ -1,4 +1,5 @@
 package com.kmaebashi.nctfw;
+import com.kmaebashi.blog.service.Util;
 import com.kmaebashi.nctfwimpl.ControllerInvokerImpl;
 import com.kmaebashi.nctfwimpl.DbAccessContextImpl;
 import com.kmaebashi.nctfwimpl.DbAccessInvokerImpl;
@@ -12,7 +13,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.OutputStream;
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.sql.Connection;
 
@@ -52,6 +59,9 @@ public abstract class Router {
                 PrintWriter out = response.getWriter();
                 out.println(json.getJson());
                 out.close();
+            } else if (result instanceof ImageFileResult ifr) {
+                logger.info("ImageFileResult");
+                processImageFileResult(ifr, response);
             }
         } catch (BadRequestException ex) {
             this.getLogger().info(ex.getMessage());
@@ -96,6 +106,29 @@ public abstract class Router {
         ControllerInvoker ci = new ControllerInvokerImpl(rc);
 
         return ci;
+    }
+
+    private void processImageFileResult(ImageFileResult ifr, HttpServletResponse response) throws IOException {
+        Path path = ifr.getImagePath();
+        // BUGBUG フレームワークがアプリに依存している
+        String suffix = Util.getSuffix(path.toString());
+        if (suffix.equals("jpg")) {
+            response.setContentType("image/jpeg");
+        } else {
+            response.setContentType("image/" + suffix);
+        }
+        OutputStream out = new BufferedOutputStream(response.getOutputStream());
+
+        try (InputStream fis
+                     = new BufferedInputStream(new FileInputStream(path.toFile()))) {
+            int ch;
+            while ((ch = fis.read()) != -1) {
+                out.write(ch);
+            }
+        }
+        System.out.println("processImageResult pass7:" + path);
+        out.close();
+        System.out.println("processImageResult pass8:" + path);
     }
 
     public abstract RoutingResult doRouting(String path, ControllerInvoker invoker, HttpServletRequest request);

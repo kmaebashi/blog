@@ -24,13 +24,15 @@ public class BlogRouter extends Router {
     private ServletContext servletContext;
     private Logger logger;
     private ResourceBundle resourceBundle;
-    private Path imageRoot;
+    private Path originalImageRoot;
+    private Path resizedImageRoot;
 
     public BlogRouter(ServletContext servletContext, Logger logger, ResourceBundle rb) {
         this.servletContext = servletContext;
         this.logger = logger;
         this.resourceBundle = rb;
-        this.imageRoot = Paths.get(rb.getString("blog.image-directory"));
+        this.originalImageRoot = Paths.get(rb.getString("blog.original-image-directory"));
+        this.resizedImageRoot = Paths.get(rb.getString("blog.resized-image-directory"));
     }
 
     @Override
@@ -57,12 +59,17 @@ public class BlogRouter extends Router {
                 } else {
                     result = AdminController.showPage(invoker, params);
                 }
+            } else if (route == Route.GET_IMAGE_ADMIN && currentUserId != null) {
+                int photoId = (int)params.get("photo_id");
+                String blogId = (String)params.get("blog_id");
+                result = ImageController.getImageAdmin(invoker, photoId, blogId, this.resizedImageRoot);
             }
         } else if (request.getMethod().equals("POST")) {
             if (route == Route.DO_LOGIN) {
                 result = LoginController.doLogin(invoker);
             } else if (route == Route.POST_IMAGES && currentUserId != null) {
-                result = ImageController.postImages(invoker, this.imageRoot);
+                result = ImageController.postImages(invoker, currentUserId, (String)params.get("blog_id"),
+                                                    this.originalImageRoot, this.resizedImageRoot);
             }
         }
         this.logger.info("doRouting end.");
