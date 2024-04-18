@@ -1,5 +1,6 @@
 rmdir /s /q C:\Tomcat10\webapps\blog\WEB-INF\classes\com\kmaebashi
-xcopy /E C:\maebashi\develop\IdeaProjects\Blog\target\classes\com C:\Tomcat10\webapps\blog\WEB-INF\classes\com
+#xcopy /E C:\maebashi\develop\IdeaProjects\Blog\target\classes\com C:\Tomcat10\webapps\blog\WEB-INF\classes\com
+xcopy /E C:\maebashi\develop\IdeaProjects\Blog\out\production\Blog\com C:\Tomcat10\webapps\blog\WEB-INF\classes\com
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\*.html C:\Tomcat10\webapps\blog\WEB-INF\htmltemplate\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\css\*.css C:\Tomcat10\webapps\blog\css\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\js\*.js C:\Tomcat10\webapps\blog\js\

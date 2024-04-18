@@ -24,4 +24,9 @@ public class AdminController {
         });
     }
 
+    public static RoutingResult postArticle(ControllerInvoker invoker, String currentUserId, String blogId) {
+        return invoker.invoke((context) -> {
+            return null;
+        });
+    }
 }

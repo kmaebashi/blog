@@ -14,6 +14,7 @@ public class SelectRoute {
     private static Pattern adminPattern = Pattern.compile("^(\\w+)/admin$");
     private static Pattern postImagesPattern = Pattern.compile("^(\\w+)/api/postimages$");
     private static Pattern getImageAdminPattern = Pattern.compile("^(\\w+)/api/getimageadmin/(\\d*)$");
+    private static Pattern postArticlePattern = Pattern.compile("^(\\w+)/api/postarticle$");
 
     static Route select(String path, HashMap<String, Object> params) {
         try {
@@ -53,6 +54,12 @@ public class SelectRoute {
                 int photoId = Integer.parseInt(photoIdStr);
                 params.put("photo_id", photoId);
                 return Route.GET_IMAGE_ADMIN;
+            }
+            matcher = postArticlePattern.matcher(path);
+            if (matcher.matches()) {
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                return Route.POST_ARTICLE;
             }
             if (path.equals("api/dologin")) {
                 return Route.DO_LOGIN;

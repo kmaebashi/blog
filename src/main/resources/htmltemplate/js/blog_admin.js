@@ -10,9 +10,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   const addSectionButton = document.getElementById("add-section-button");
   addSectionButton.onclick = addSection;
+
+  const saveButton = document.getElementById("save-button");
+  saveButton.onclick = save;
+
+  const publishButton = document.getElementById("publish-button");
+  publishButton.onclick = publish;
 });
 
-const photos = {
+const photosInThisPage = {
 };
 
 function imageFileInputOnChange(event) {
@@ -53,20 +59,20 @@ function addPhotos(section, newPhotoArray) {
   let sectionPhotos;
 
   console.log("addPhotos pass1 len.." + newPhotoArray.length);
-  if (("section" + section) in photos) {
+  if (("section" + section) in photosInThisPage) {
     console.log("addPhotos pass2-1");
-    sectionPhotos = photos["section" + section];
+    sectionPhotos = photosInThisPage["section" + section];
   } else {
     console.log("addPhotos pass2-2");
     sectionPhotos = [];
   }
   console.log("addPhotos pass3");
-  photos["section" + section] = sectionPhotos.concat(newPhotoArray);
+  photosInThisPage["section" + section] = sectionPhotos.concat(newPhotoArray);
 }
 
 function refreshSectionPhotos(section) {
   console.log("refreshSectionPhotos pass1 section.." + section);
-  if (!("section" + section) in photos) {
+  if (!("section" + section) in photosInThisPage) {
     return;
   }
   console.log("refreshSectionPhotos pass2");
@@ -75,7 +81,7 @@ function refreshSectionPhotos(section) {
   while (photoDiv.firstChild) {
     photoDiv.removeChild(photoDiv.firstChild);
   }
-  const sectionPhotos = photos["section" + section];
+  const sectionPhotos = photosInThisPage["section" + section];
 
   console.log("refreshSectionPhotos pass3 len.." + sectionPhotos.length);
   for (let i = 0; i < sectionPhotos.length; i++) {
@@ -85,6 +91,7 @@ function refreshSectionPhotos(section) {
     const pElem = document.createElement("p");
     pElem.appendChild(imageElem);
     const captionElem = document.createElement("textarea");
+    captionElem.setAttribute("id", "photo-caption-" + sectionPhotos[i].id);
     captionElem.setAttribute("class", "photo-caption");
     const onePhotoDiv = document.createElement("div");
     onePhotoDiv.setAttribute("class", "one-photo");
@@ -109,4 +116,53 @@ function addSection() {
   fileInputButton.onchange = imageFileInputOnChange;
 
   sectionContainer.appendChild(cloneSectionDiv);
+}
+
+function save() {
+  postArticle(false);
+}
+
+function publish() {
+  postArticle(true);
+}
+
+function postArticle(publishFlag) {
+  const post = {};
+
+  post.title = document.getElementById("blog-post-title").value;
+
+  const sectionContainer = document.getElementById("section-container");
+  const sectionList = sectionContainer.getElementsByClassName("section-box");
+  post.sectionArray = [];
+
+  for (let secIdx = 0; secIdx < sectionList.length; secIdx++) {
+    const section = {};
+    section["id"] = "section" + (secIdx + 1);
+    section["text"] = sectionList[secIdx].getElementsByClassName("section-text")[0].value;
+    section["photos"] = [];
+    if (("section" + (secIdx + 1)) in photosInThisPage) {
+      const photos = photosInThisPage["section" + (secIdx + 1)];
+      for (let photoIdx = 0; photoIdx < photos.length; photoIdx++) {
+        const photoObj = {};
+        photoObj.id = photos[photoIdx].id;
+        photoObj.caption = document.getElementById("photo-caption-" + photos[photoIdx].id).value;
+        section.photos.push(photoObj);
+      }
+    }
+    post.sectionArray.push(section);
+  }
+  fetch("./api/postarticle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(post)
+    })
+    .then(response => {
+      return response.text()
+    })
+    .then(data => {
+      console.log(data);
+    });
+  alert("json.." + JSON.stringify(post));
 }

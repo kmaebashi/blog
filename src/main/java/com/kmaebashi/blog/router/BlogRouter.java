@@ -70,6 +70,8 @@ public class BlogRouter extends Router {
             } else if (route == Route.POST_IMAGES && currentUserId != null) {
                 result = ImageController.postImages(invoker, currentUserId, (String)params.get("blog_id"),
                                                     this.originalImageRoot, this.resizedImageRoot);
+            } else if (route == Route.POST_ARTICLE && currentUserId != null) {
+                result = AdminController.postArticle(invoker, currentUserId, (String)params.get("blog_id"));
             }
         }
         this.logger.info("doRouting end.");
