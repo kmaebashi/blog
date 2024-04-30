@@ -47,6 +47,11 @@ public class JsonObjectImpl implements JsonObject {
         return sb.toString();
     }
 
+    @Override
+    public int getLineNumber() {
+        return this.getLeftBraceLineNumber();
+    }
+
     void stringifySub(StringBuilder sb, int indentLevel) {
         sb.append("{" + Constant.LINE_SEPARATOR);
 

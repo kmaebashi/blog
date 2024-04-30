@@ -7,8 +7,7 @@
   </head>
   <h1>ログイン画面</h1>
   <body>
-    <form action="/blog/api/dologin" method="POST">
-      <span id="login-error-message"></span>
+    <form action="api/dologin" method="POST" id="login-form">
       <table>
         <tr>
           <td>ユーザID</td>
@@ -19,7 +18,8 @@
           <td><input type="password" name="password" size="20"></td>
         </tr>
       </table>
-      <p><button id="login_button">ログイン</button></p>
+      <p><button type="button" id="login-button">ログイン</button></p>
     <form>
+    <script src="js/login.js"></script>
   </body>
 </html>

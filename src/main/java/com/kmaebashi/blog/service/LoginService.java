@@ -23,16 +23,22 @@ public class LoginService {
         });
     }
 
-    public static DocumentResult doLogin(ServiceInvoker invoker, String userId, String password) {
+    public static boolean checkPassword(ServiceInvoker invoker, String userId, String password) {
         return invoker.invoke((context) -> {
-            if (userId == null || password == null) {
-                throw new BadRequestException("ユーザIDとパスワードを入力してください");
-            }
             UserDto userDto = UserDbAccess.getUser(context.getDbAccessInvoker(), userId.trim());
             if (userDto == null || !Util.checkPassword(password.trim(), userDto.password)) {
-                Path htmlPath = context.getHtmlTemplateDirectory().resolve("login.html");
-                Document doc = LoginService.render(htmlPath, true);
-                return new DocumentResult(doc);
+                return false;
+            } else {
+                return true;
+            }
+        });
+    }
+
+    public static DocumentResult doLogin(ServiceInvoker invoker, String userId, String password) {
+        return invoker.invoke((context) -> {
+            UserDto userDto = UserDbAccess.getUser(context.getDbAccessInvoker(), userId.trim());
+            if (userDto == null || !Util.checkPassword(password.trim(), userDto.password)) {
+                throw new BadRequestException("ログインエラー");
             }
             return null;
         });
@@ -41,10 +47,7 @@ public class LoginService {
     private static Document render(Path htmlPath, boolean isError)
             throws Exception {
         Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
-        Element elem = doc.getElementById("login-error-message");
-        if (isError) {
-            elem.text("ログインエラー");
-        }
+
         return doc;
     }
 

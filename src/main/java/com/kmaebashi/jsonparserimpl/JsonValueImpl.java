@@ -46,21 +46,25 @@ public class JsonValueImpl implements JsonValue {
 
     @Override
     public int getInt() {
+        assert this.type == JsonValueType.INT;
         return this.intValue;
     }
 
     @Override
     public double getReal() {
+        assert this.type == JsonValueType.REAL;
         return this.realValue;
     }
 
     @Override
     public String getString() {
+        assert this.type == JsonValueType.STRING;
         return this.stringValue;
     }
 
     @Override
     public boolean getBoolean() {
+        assert this.type == JsonValueType.BOOLEAN;
         return this.booleanValue;
     }
 

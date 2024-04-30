@@ -4,7 +4,6 @@ import com.kmaebashi.simplelogger.Logger;
 import com.kmaebashi.simplelogger.SimpleLoggerException;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,21 +17,22 @@ public class FileLogger implements Logger {
     LogLevel currentLogLevel = LogLevel.DEBUG;
     BufferedWriter writer;
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
-    DateTimeFormatter suffixFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter suffixDatePartFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
     String logDir;
     String filePrefix;
-    String currentSuffix;
+    String currentDatePart;
 
     public FileLogger(String dir, String filePrefix) throws IOException {
-        this.currentSuffix = LocalDateTime.now().format(suffixFormatter);
-        this.writer = openWriter(dir, filePrefix, this.currentSuffix);
+        this.currentDatePart = LocalDateTime.now().format(suffixDatePartFormatter);
+        this.writer = openWriter(dir, filePrefix, this.currentDatePart);
 
         this.logDir = dir;
         this.filePrefix = filePrefix;
     }
 
-    private static BufferedWriter openWriter(String dir, String filePrefix, String suffix) throws IOException {
-        Path logFilePath = Paths.get(dir, filePrefix + "_" + suffix + ".log");
+    private static BufferedWriter openWriter(String dir, String filePrefix, String datePart) throws IOException {
+        long pid = ProcessHandle.current().pid();
+        Path logFilePath = Paths.get(dir, filePrefix + "_" + datePart + "_" + pid + ".log");
         return Files.newBufferedWriter(logFilePath, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
@@ -80,7 +80,7 @@ public class FileLogger implements Logger {
                 this.writer.append(" at " + ste[3].getLineNumber());
             }
             this.writer.append(",");
-            this.writer.append(message);
+            this.writer.append("\"" + message.replace("\"", "\"\"") + "\"");
             this.writer.newLine();
             this.writer.flush();
         } catch (IOException ex) {
@@ -89,11 +89,11 @@ public class FileLogger implements Logger {
     }
 
     private void logRotate() throws IOException {
-        String nextSuffix = LocalDateTime.now().format(suffixFormatter);
-        if (!this.currentSuffix.equals(nextSuffix)) {
-            this.currentSuffix = nextSuffix;
+        String nextDatePart = LocalDateTime.now().format(suffixDatePartFormatter);
+        if (!this.currentDatePart.equals(nextDatePart)) {
+            this.currentDatePart = nextDatePart;
             this.writer.close();
-            this.writer = openWriter(this.logDir, this.filePrefix, this.currentSuffix);
+            this.writer = openWriter(this.logDir, this.filePrefix, this.currentDatePart);
         }
     }
 }

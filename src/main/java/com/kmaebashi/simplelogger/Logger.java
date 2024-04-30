@@ -1,4 +1,6 @@
 package com.kmaebashi.simplelogger;
+import com.kmaebashi.simpleloggerimpl.FileLogger;
+import java.io.IOException;
 
 public interface Logger {
     void debug(String message);
@@ -7,4 +9,8 @@ public interface Logger {
     void error(String message);
     void fatal(String message);
     void setLogLevel(LogLevel logLevel);
+
+    public static Logger createFileLogger(String dir, String filePrefix)  throws IOException  {
+        return new FileLogger(dir, filePrefix);
+    }
 }

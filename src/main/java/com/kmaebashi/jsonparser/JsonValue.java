@@ -13,8 +13,6 @@ public interface JsonValue extends JsonElement {
 
     boolean getBoolean();
 
-    int getLineNumber();
-
     @Override
     String stringify();
 

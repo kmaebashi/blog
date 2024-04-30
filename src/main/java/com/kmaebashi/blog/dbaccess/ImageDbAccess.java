@@ -84,4 +84,25 @@ public class ImageDbAccess {
             return dto;
         });
     }
+
+    public static PhotoDto getPhoto(DbAccessInvoker invoker, int photoId, String blogId, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT * FROM PHOTOS
+                    WHERE PHOTO_ID = :PHOTO_ID
+                    AND BLOG_ID = :BLOG_ID
+                    AND BLOG_POST_ID = :BLOG_POST_ID
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("PHOTO_ID", photoId);
+            params.put("BLOG_ID", blogId);
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            PhotoDto dto = ResultSetMapper.toDto(rs, PhotoDto.class);
+            return dto;
+        });
+    }
 }

@@ -151,4 +151,5 @@ public class JsonParserImpl implements JsonParser {
     public void close() throws IOException {
         this.reader.close();
     }
+
 }

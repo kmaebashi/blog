@@ -44,7 +44,7 @@ class SelectRouteTest {
     void selectTest005() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
         Route route = SelectRoute.select("kmaebashi/admin/123", params);
-        assertEquals(Route.ADMIN, route);
+        assertEquals(Route.EDIT_POST, route);
         assertEquals("kmaebashi", params.get("blog_id"));
         assertEquals(123, params.get("blog_post_id"));
     }
@@ -58,17 +58,25 @@ class SelectRouteTest {
     @Test
     void selectTest007() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
-        Route route = SelectRoute.select("api/postimages", params);
+        Route route = SelectRoute.select("kmaebashi/api/postimages", params);
         assertEquals(Route.POST_IMAGES, route);
+        assertEquals("kmaebashi", params.get("blog_id"));
     }
 
     @Test
     void selectTest008() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
-        Route route = SelectRoute.select("/api/getimageadmin/28", params);
+        Route route = SelectRoute.select("kmaebashi/api/getimageadmin/28", params);
         assertEquals(Route.GET_IMAGE_ADMIN, route);
+        assertEquals("kmaebashi", params.get("blog_id"));
         int photoId = (int)params.get("photo_id");
         assertEquals(28, photoId);
+    }
+    @Test
+    void selectTest009() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("login", params);
+        assertEquals(Route.LOGIN, route);
     }
 
 }

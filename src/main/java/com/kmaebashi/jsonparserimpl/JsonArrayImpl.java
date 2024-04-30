@@ -39,6 +39,11 @@ public class JsonArrayImpl implements JsonArray {
         return sb.toString();
     }
 
+    @Override
+    public int getLineNumber() {
+        return this.getLeftBracketLineNumber();
+    }
+
     void stringifySub(StringBuilder sb, int indentLevel) {
         sb.append("[" + Constant.LINE_SEPARATOR);
 

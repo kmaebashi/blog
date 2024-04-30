@@ -130,6 +130,7 @@ function postArticle(publishFlag) {
   const post = {};
 
   post.title = document.getElementById("blog-post-title").value;
+  post.publishFlag = publishFlag;
 
   const sectionContainer = document.getElementById("section-container");
   const sectionList = sectionContainer.getElementsByClassName("section-box");
@@ -138,7 +139,7 @@ function postArticle(publishFlag) {
   for (let secIdx = 0; secIdx < sectionList.length; secIdx++) {
     const section = {};
     section["id"] = "section" + (secIdx + 1);
-    section["text"] = sectionList[secIdx].getElementsByClassName("section-text")[0].value;
+    section["body"] = sectionList[secIdx].getElementsByClassName("section-text")[0].value;
     section["photos"] = [];
     if (("section" + (secIdx + 1)) in photosInThisPage) {
       const photos = photosInThisPage["section" + (secIdx + 1)];

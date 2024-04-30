@@ -8,11 +8,14 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.ResourceBundle;
 
+import com.kmaebashi.blog.controller.BlogListController;
 import com.kmaebashi.blog.controller.ImageController;
 import com.kmaebashi.blog.controller.LoginController;
 import com.kmaebashi.blog.controller.AdminController;
+import com.kmaebashi.blog.controller.ShowPostContoller;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
+import com.kmaebashi.nctfw.RedirectResult;
 import com.kmaebashi.nctfw.RoutingResult;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +40,16 @@ public class BlogRouter extends Router {
 
     @Override
     public RoutingResult doRouting(String path, ControllerInvoker invoker, HttpServletRequest request) {
+        this.logger.info("HttpServletRequest test start.");
+        this.logger.info("getQueryString.." + request.getQueryString());
+        this.logger.info("getRequestURI.." + request.getRequestURI());
+        this.logger.info("getRequestURL.." + request.getRequestURL());
+        this.logger.info("getServletPath.." + request.getServletPath());
+        this.logger.info("getContextPath.." + request.getContextPath());
+        this.logger.info("getPathInfo.." + request.getPathInfo());
+        this.logger.info("getPathTranslated.." + request.getPathTranslated());
+
+        this.logger.info("HttpServletRequest test end.");
         this.logger.info("doRouting start. path.." + path);
         this.logger.info("method.." + request.getMethod());
 
@@ -52,10 +65,35 @@ public class BlogRouter extends Router {
         }
         this.logger.info("currentUserId.." + currentUserId);
         this.logger.info("route.." + route);
+
         if (request.getMethod().equals("GET")) {
-            if (route == Route.ADMIN) {
+            if (route == Route.SHOW_POST) {
+                String blogId = (String) params.get("blog_id");
+                int blogPostId = (int) params.get("blog_post_id");
+                return ShowPostContoller.showPostByPostId(invoker, blogId, blogPostId);
+            } else if (route == Route.GET_IMAGE) {
+                int photoId = (int)params.get("photo_id");
+                String blogId = (String)params.get("blog_id");
+                int blogPostId = (int)params.get("blog_post_id");
+
+                return ImageController.getImage(invoker, photoId, blogId, blogPostId, this.resizedImageRoot);
+            } else if (route == Route.LOGIN) {
+                result = LoginController.showPage(invoker, path);
+            } else if (route == Route.BLOG_LIST) {
                 if (currentUserId == null) {
-                    result = LoginController.showPage(invoker, path);
+                    session.setAttribute("return_url", createReturnPath(request, path));
+                    String loginPath = request.getContextPath() + "/login";
+                    this.logger.info("loginPath.." + loginPath);
+                    return new RedirectResult(loginPath);
+                } else {
+                    result = BlogListController.showPage(invoker, currentUserId);
+                }
+            } else if (route == Route.ADMIN || route == Route.EDIT_POST) {
+                if (currentUserId == null) {
+                    session.setAttribute("return_url", createReturnPath(request, path));
+                    String loginPath = request.getContextPath() + "/login";
+                    this.logger.info("loginPath.." + loginPath);
+                    return new RedirectResult(loginPath);
                 } else {
                     result = AdminController.showPage(invoker, params);
                 }
@@ -65,7 +103,9 @@ public class BlogRouter extends Router {
                 result = ImageController.getImageAdmin(invoker, photoId, blogId, this.resizedImageRoot);
             }
         } else if (request.getMethod().equals("POST")) {
-            if (route == Route.DO_LOGIN) {
+            if (route == Route.CHECK_PASSWORD) {
+                result = LoginController.checkPassword(invoker);
+            } else if (route == Route.DO_LOGIN) {
                 result = LoginController.doLogin(invoker);
             } else if (route == Route.POST_IMAGES && currentUserId != null) {
                 result = ImageController.postImages(invoker, currentUserId, (String)params.get("blog_id"),
@@ -79,6 +119,15 @@ public class BlogRouter extends Router {
         return result;
     }
 
+    private static String createReturnPath(HttpServletRequest request, String path)  {
+        String returnUrl;
+        if (request.getQueryString() == null) {
+            returnUrl = path;
+        } else {
+            returnUrl = path + "?" + request.getQueryString();
+        }
+        return returnUrl;
+    }
 
     @Override
     public Connection getConnection() throws Exception {

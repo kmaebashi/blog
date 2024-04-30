@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import com.kmaebashi.jsonparserimpl.JsonParserImpl;
 
@@ -22,4 +23,14 @@ public interface JsonParser extends AutoCloseable {
 
     JsonElement parse() throws IOException, JsonParseException;
     void close() throws IOException;
+
+    static JsonElement parse(String json) throws JsonParseException {
+        JsonParserImpl parser = new JsonParserImpl(new StringReader(json));
+        try {
+            return parser.parse();
+        } catch (IOException ex) {
+            assert false : "文字列からのパースなのにIOExceptionが発生している";
+        }
+        return null; // make compiler happy.
+    }
 }

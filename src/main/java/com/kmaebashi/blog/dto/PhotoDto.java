@@ -16,4 +16,7 @@ public class PhotoDto {
 
     @TableColumn("DISPLAY_ORDER")
     public int displayOrder;
+
+    @TableColumn("CAPTION")
+    public String caption;
 }

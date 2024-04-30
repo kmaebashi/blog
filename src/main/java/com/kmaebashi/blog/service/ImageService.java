@@ -106,5 +106,15 @@ public class ImageService {
             return new ImageFileResult(photoPath);
         });
     }
+
+    public static ImageFileResult getImage(ServiceInvoker invoker, int photoId, String blogId, int blogPostId,
+                                                Path resizedImageRoot) {
+        return invoker.invoke((context) -> {
+            PhotoDto dto = ImageDbAccess.getPhoto(context.getDbAccessInvoker(), photoId, blogId, blogPostId);
+            Path photoPath = resizedImageRoot.resolve(dto.path);
+
+            return new ImageFileResult(photoPath);
+        });
+    }
 }
 

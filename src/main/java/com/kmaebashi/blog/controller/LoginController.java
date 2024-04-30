@@ -2,6 +2,7 @@ package com.kmaebashi.blog.controller;
 
 import com.kmaebashi.blog.service.LoginService;
 import com.kmaebashi.nctfw.ControllerInvoker;
+import com.kmaebashi.nctfw.PlainTextResult;
 import com.kmaebashi.nctfw.RedirectResult;
 import com.kmaebashi.nctfw.RoutingResult;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,12 +13,19 @@ public class LoginController {
 
     public static RoutingResult showPage(ControllerInvoker invoker, String path) {
         return invoker.invoke((context) -> {
-            HttpServletRequest request = context.getServletRequest();
-            HttpSession session = request.getSession(true);
-            session.setAttribute("return_url", path);
             RoutingResult result
                     = LoginService.showPage(context.getServiceInvoker());
             return result;
+        });
+    }
+
+    public static RoutingResult checkPassword(ControllerInvoker invoker) {
+        return invoker.invoke((context) -> {
+            HttpServletRequest request = context.getServletRequest();
+            boolean checkResult =LoginService.checkPassword(context.getServiceInvoker(),
+                                                    request.getParameter("userid"),
+                                                    request.getParameter("password"));
+            return new PlainTextResult(checkResult ? "OK" : "NG");
         });
     }
 
@@ -33,7 +41,11 @@ public class LoginController {
                 HttpSession session = request.getSession(true);
                 session.setAttribute("current_user_id", request.getParameter("userid").trim());
                 returnUrl = (String)session.getAttribute("return_url");
-                return new RedirectResult("/blog/" +returnUrl);
+                if (returnUrl == null) {
+                    return new RedirectResult(request.getContextPath() + "/blog_list");
+                } else {
+                    return new RedirectResult(request.getContextPath() + "/" + returnUrl);
+                }
             } else {
                 return result;
             }

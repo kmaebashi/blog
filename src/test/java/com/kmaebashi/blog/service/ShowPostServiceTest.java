@@ -1,4 +1,6 @@
 package com.kmaebashi.blog.service;
+
+import com.kmaebashi.blog.BlogTestUtil;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
@@ -10,23 +12,23 @@ import com.kmaebashi.nctfwimpl.ServiceContextImpl;
 import com.kmaebashi.nctfwimpl.ServiceInvokerImpl;
 import com.kmaebashi.simplelogger.Logger;
 import com.kmaebashi.simpleloggerimpl.FileLogger;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
-import com.kmaebashi.blog.BlogTestUtil;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class AdminServiceTest {
+class ShowPostServiceTest {
     private static Connection conn;
     private static Logger logger;
 
     @BeforeAll
     static void connectDb() throws Exception {
-        AdminServiceTest.conn = BlogTestUtil.getConnection();
-        AdminServiceTest.logger = new FileLogger("./log", "LoginServiceTest");
+        ShowPostServiceTest.conn = BlogTestUtil.getConnection();
+        ShowPostServiceTest.logger = new FileLogger("./log", "ShowPostServiceTest");
     }
 
     @AfterAll
@@ -35,26 +37,14 @@ class AdminServiceTest {
     }
 
     @Test
-    void showPageTest001() throws Exception {
+    void showPostByPostIdTest001() {
         DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
         DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
         ServiceContext sc = new ServiceContextImpl(invoker,
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", null);
-        String html = dr.getDocument().html();
-    }
-
-    @Test
-    void showPageTest002() throws Exception {
-        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
-        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
-        ServiceContext sc = new ServiceContextImpl(invoker,
-                Paths.get("./src/main/resources/htmltemplate"),
-                logger);
-        ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", Integer.valueOf(5));
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(5));
         String html = dr.getDocument().html();
     }
 }
