@@ -12,4 +12,5 @@ class UtilTest {
         assertTrue(Util.checkPassword("testpass/123", hashed));
         assertFalse(Util.checkPassword("testpass/234", hashed));
     }
+
 }

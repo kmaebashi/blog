@@ -129,6 +129,9 @@ function publish() {
 function postArticle(publishFlag) {
   const post = {};
 
+  const params = new URLSearchParams(document.location.search);
+
+  post.blogPostId = parseInt(params.get("postid"));
   post.title = document.getElementById("blog-post-title").value;
   post.publishFlag = publishFlag;
 
@@ -152,18 +155,26 @@ function postArticle(publishFlag) {
     }
     post.sectionArray.push(section);
   }
+  const metaElem = document.querySelector('meta[name="csrf_token"]');
+  let csrfToken = "";
+  if (metaElem !== null) {
+    csrfToken = metaElem.content;
+  }
+  console.log("csrfToken.." + csrfToken);
   fetch("./api/postarticle", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Csrf-Token": csrfToken
         },
         body: JSON.stringify(post)
     })
     .then(response => {
       return response.text()
     })
-    .then(data => {
-      console.log(data);
+    .then(ret => {
+      console.log(ret);
+      const retObj = JSON.parse(ret);
+      location.href = "./admin?postid=" + retObj.blogPostId;
     });
-  alert("json.." + JSON.stringify(post));
 }

@@ -3,9 +3,11 @@ package com.kmaebashi.blog.service;
 import com.kmaebashi.blog.dbaccess.BlogDbAccess;
 import com.kmaebashi.blog.dbaccess.BlogPostDbAccess;
 import com.kmaebashi.blog.dbaccess.ImageDbAccess;
+import com.kmaebashi.blog.dbaccess.ProfileDbAccess;
 import com.kmaebashi.blog.dto.BlogDto;
 import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.PhotoDto;
+import com.kmaebashi.blog.dto.ProfileDto;
 import com.kmaebashi.jsonparser.JsonArray;
 import com.kmaebashi.jsonparser.JsonElement;
 import com.kmaebashi.jsonparser.JsonObject;
@@ -114,6 +116,16 @@ public class ImageService {
             Path photoPath = resizedImageRoot.resolve(dto.path);
 
             return new ImageFileResult(photoPath);
+        });
+    }
+
+    public static ImageFileResult getProfileImage(ServiceInvoker invoker, String blogId,
+                                                  Path resizedProfileImageRoot) {
+        return invoker.invoke((context) -> {
+            ProfileDto dto = ProfileDbAccess.getProfileImageByBlogId(context.getDbAccessInvoker(), blogId);
+            Path imagePath = resizedProfileImageRoot.resolve(dto.imagePath);
+
+            return new ImageFileResult(imagePath);
         });
     }
 }

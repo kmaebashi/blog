@@ -54,4 +54,11 @@ public class ImageController {
             return ImageService.getImage(context.getServiceInvoker(), photoId, blogId, blogPostId, resizedImageRoot);
         });
     }
+
+    public static RoutingResult getProfileImage(ControllerInvoker invoker, String blogId,
+                                                Path resizedProfileImageRoot) {
+        return invoker.invoke((context) -> {
+            return ImageService.getProfileImage(context.getServiceInvoker(), blogId, resizedProfileImageRoot);
+        });
+    }
 }

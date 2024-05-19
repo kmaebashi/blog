@@ -1,6 +1,7 @@
 package com.kmaebashi.blog.servlet;
 
 import com.kmaebashi.blog.router.BlogRouter;
+import com.kmaebashi.blog.util.Log;
 import com.kmaebashi.nctfw.InternalException;
 import com.kmaebashi.simplelogger.Logger;
 import com.kmaebashi.simpleloggerimpl.FileLogger;
@@ -24,6 +25,7 @@ public class BlogServlet extends HttpServlet {
         } catch (IOException ex) {
             throw new InternalException("ログファイルの作成に失敗しました。", ex);
         }
+        Log.setLogger(logger);
         this.router = new BlogRouter(this.getServletContext(), this.logger, rb);
     }
 

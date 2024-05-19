@@ -1,14 +1,19 @@
 package com.kmaebashi.blog.controller;
 
+import com.kmaebashi.blog.common.SessionKey;
 import com.kmaebashi.blog.controller.data.ArticleData;
 import com.kmaebashi.blog.controller.data.ArticlePhoto;
 import com.kmaebashi.blog.controller.data.ArticleSection;
 import com.kmaebashi.blog.service.AdminService;
 import com.kmaebashi.blog.service.LoginService;
+import com.kmaebashi.blog.service.Util;
+import com.kmaebashi.blog.util.CsrfUtil;
 import com.kmaebashi.jsonparser.ClassMapper;
 import com.kmaebashi.jsonparser.JsonElement;
 import com.kmaebashi.jsonparser.JsonParser;
+import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
+import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.JsonResult;
 import com.kmaebashi.nctfw.RoutingResult;
 import com.kmaebashi.simplelogger.Logger;
@@ -34,8 +39,15 @@ public class AdminController {
             }
             context.getLogger().info("blogId.." + blogId);
             context.getLogger().info("blogPostId.." + blogPostId);
-            RoutingResult result
+            DocumentResult result
                     = AdminService.showPage(context.getServiceInvoker(), blogId, blogPostId);
+
+            HttpSession session = context.getServletRequest().getSession(false);
+            if (session != null) {
+                String csrfToken = (String) session.getAttribute(SessionKey.CSRF_TOKEN);
+                CsrfUtil.addCsrfToken(result, csrfToken);
+            }
+
             return result;
         });
     }
@@ -43,6 +55,9 @@ public class AdminController {
     public static RoutingResult postArticle(ControllerInvoker invoker, String currentUserId, String blogId) {
         return invoker.invoke((context) -> {
             JsonResult result = null;
+            if (!CsrfUtil.checkCsrfToken(context.getServletRequest(), true)) {
+                throw new BadRequestException("CSRFトークン不正");
+            }
             try (JsonParser jsonParser = JsonParser.newInstance(context.getServletRequest().getReader())) {
                 JsonElement elem = jsonParser.parse();
                 ArticleData article = ClassMapper.toObject(elem, ArticleData.class);

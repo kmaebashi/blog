@@ -8,11 +8,12 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.ResourceBundle;
 
+import com.kmaebashi.blog.common.SessionKey;
 import com.kmaebashi.blog.controller.BlogListController;
 import com.kmaebashi.blog.controller.ImageController;
 import com.kmaebashi.blog.controller.LoginController;
 import com.kmaebashi.blog.controller.AdminController;
-import com.kmaebashi.blog.controller.ShowPostContoller;
+import com.kmaebashi.blog.controller.ShowPostController;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.RedirectResult;
@@ -29,6 +30,8 @@ public class BlogRouter extends Router {
     private ResourceBundle resourceBundle;
     private Path originalImageRoot;
     private Path resizedImageRoot;
+    private Path originalProfileImageRoot;
+    private Path resizedProfileImageRoot;
 
     public BlogRouter(ServletContext servletContext, Logger logger, ResourceBundle rb) {
         this.servletContext = servletContext;
@@ -36,6 +39,8 @@ public class BlogRouter extends Router {
         this.resourceBundle = rb;
         this.originalImageRoot = Paths.get(rb.getString("blog.original-image-directory"));
         this.resizedImageRoot = Paths.get(rb.getString("blog.resized-image-directory"));
+        this.originalProfileImageRoot = Paths.get(rb.getString("blog.original-profile-image-directory"));
+        this.resizedProfileImageRoot = Paths.get(rb.getString("blog.resized-profile-image-directory"));
     }
 
     @Override
@@ -56,7 +61,7 @@ public class BlogRouter extends Router {
         RoutingResult result = null;
 
         HttpSession session = request.getSession();
-        String currentUserId = (String)session.getAttribute("current_user_id");
+        String currentUserId = (String)session.getAttribute(SessionKey.CURRENT_USER_ID);
 
         HashMap<String, Object> params = new HashMap<>();
         Route route = SelectRoute.select(path, params);
@@ -70,18 +75,23 @@ public class BlogRouter extends Router {
             if (route == Route.SHOW_POST) {
                 String blogId = (String) params.get("blog_id");
                 int blogPostId = (int) params.get("blog_post_id");
-                return ShowPostContoller.showPostByPostId(invoker, blogId, blogPostId);
+                return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId);
             } else if (route == Route.GET_IMAGE) {
                 int photoId = (int)params.get("photo_id");
                 String blogId = (String)params.get("blog_id");
                 int blogPostId = (int)params.get("blog_post_id");
 
                 return ImageController.getImage(invoker, photoId, blogId, blogPostId, this.resizedImageRoot);
+
+            } else if (route == Route.GET_PROFILE_IMAGE) {
+                String blogId = (String)params.get("blog_id");
+
+                return ImageController.getProfileImage(invoker, blogId, this.resizedProfileImageRoot);
             } else if (route == Route.LOGIN) {
                 result = LoginController.showPage(invoker, path);
             } else if (route == Route.BLOG_LIST) {
                 if (currentUserId == null) {
-                    session.setAttribute("return_url", createReturnPath(request, path));
+                    session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
                     String loginPath = request.getContextPath() + "/login";
                     this.logger.info("loginPath.." + loginPath);
                     return new RedirectResult(loginPath);
@@ -90,7 +100,7 @@ public class BlogRouter extends Router {
                 }
             } else if (route == Route.ADMIN || route == Route.EDIT_POST) {
                 if (currentUserId == null) {
-                    session.setAttribute("return_url", createReturnPath(request, path));
+                    session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
                     String loginPath = request.getContextPath() + "/login";
                     this.logger.info("loginPath.." + loginPath);
                     return new RedirectResult(loginPath);
@@ -112,6 +122,8 @@ public class BlogRouter extends Router {
                                                     this.originalImageRoot, this.resizedImageRoot);
             } else if (route == Route.POST_ARTICLE && currentUserId != null) {
                 result = AdminController.postArticle(invoker, currentUserId, (String)params.get("blog_id"));
+            } else if (route == Route.POST_COMMENT) {
+                result = ShowPostController.postComment(invoker, currentUserId, (String)params.get("blog_id"));
             }
         }
         this.logger.info("doRouting end.");

@@ -1,10 +1,11 @@
 package com.kmaebashi.blog.service;
 
+import com.kmaebashi.nctfw.DocumentResult;
+import org.jsoup.nodes.Element;
 import org.mindrot.jbcrypt.BCrypt;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.util.Base64;
+import org.jsoup.nodes.Document;
 
 public class Util {
     private Util() {}
@@ -24,5 +25,21 @@ public class Util {
         } else {
             return null;
         }
+    }
+
+    static String escapeHtml(String src) {
+        return src.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&#39;");
+    }
+
+    static String escapeHtml2(String src) {
+        String escaped = Util.escapeHtml(src);
+        return nl2Br(escaped);
+    }
+
+    static String nl2Br(String str) {
+        str = str.replaceAll("\r\n", "<br>");
+        str = str.replaceAll("\n", "<br>");
+
+        return str;
     }
 }

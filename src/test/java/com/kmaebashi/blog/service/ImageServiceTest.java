@@ -4,6 +4,7 @@ import com.kmaebashi.blog.BlogTestUtil;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
+import com.kmaebashi.nctfw.ImageFileResult;
 import com.kmaebashi.nctfw.JsonResult;
 import com.kmaebashi.nctfw.ServiceContext;
 import com.kmaebashi.nctfw.ServiceInvoker;
@@ -57,5 +58,17 @@ class ImageServiceTest {
         JsonResult jr = ImageService.saveImages(si, "kmaebashi", "kmaebashiblog", 1, partList,
                         Paths.get("./OriginalImageRoot"), Paths.get("./ResizedImageRoot"));
         logger.info("JSON.." + jr.getJson());
+    }
+
+    @Test
+    void getProfileImageTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+
+        ImageFileResult ifr = ImageService.getProfileImage(si, "kmaebashiblog", Paths.get("/dummy"));
     }
 }

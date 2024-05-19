@@ -4,6 +4,7 @@ import com.kmaebashi.blog.common.BlogPostStatus;
 import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.BlogPostSectionDto;
 import com.kmaebashi.blog.dto.PhotoDto;
+import com.kmaebashi.blog.dto.CommentDto;
 import com.kmaebashi.dbutil.NamedParameterPreparedStatement;
 import com.kmaebashi.dbutil.ResultSetMapper;
 import com.kmaebashi.nctfw.DbAccessInvoker;
@@ -240,4 +241,159 @@ public class BlogPostDbAccess {
         });
     }
 
+    public static BlogPostDto getOlderBlogPost(DbAccessInvoker invoker, String blogId, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      BLOG_POST_ID,
+                      TITLE
+                    FROM BLOG_POSTS
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                      AND BLOG_POST_ID < :BLOG_POST_ID
+                      AND STATUS = 2
+                    ORDER BY BLOG_POST_ID DESC
+                    LIMIT 1
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            BlogPostDto blogPostDto = ResultSetMapper.toDto(rs, BlogPostDto.class);
+
+            return blogPostDto;
+        });
+    }
+
+    public static BlogPostDto getNewerBlogPost(DbAccessInvoker invoker, String blogId, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      BLOG_POST_ID,
+                      TITLE
+                    FROM BLOG_POSTS
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                      AND BLOG_POST_ID > :BLOG_POST_ID
+                      AND STATUS = 2
+                    ORDER BY BLOG_POST_ID ASC
+                    LIMIT 1
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            BlogPostDto blogPostDto = ResultSetMapper.toDto(rs, BlogPostDto.class);
+
+            return blogPostDto;
+        });
+    }
+
+    public static List<CommentDto> getCommentsByBlogId(DbAccessInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      BLOG_POST_COMMENTS.BLOG_POST_ID,
+                      COMMENT_ID,
+                      POSTER_ID,
+                      POSTER_NAME,
+                      MESSAGE,
+                      BLOG_POSTS.TITLE BLOG_POST_TITLE
+                    FROM BLOG_POST_COMMENTS
+                    INNER JOIN BLOG_POSTS
+                      ON BLOG_POSTS.BLOG_POST_ID = BLOG_POST_COMMENTS.BLOG_POST_ID
+                    WHERE BLOG_POSTS.BLOG_ID = :BLOG_ID
+                    ORDER BY BLOG_POST_COMMENTS.CREATED_AT DESC
+                    LIMIT 10
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<CommentDto> dtoList = ResultSetMapper.toDtoList(rs, CommentDto.class);
+
+            return dtoList;
+        });
+    }
+
+    public static List<CommentDto> getCommentsByBlogPostId(DbAccessInvoker invoker, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      COMMENT_ID,
+                      POSTER_ID,
+                      POSTER_NAME,
+                      MESSAGE,
+                      CREATED_AT
+                    FROM BLOG_POST_COMMENTS
+                    WHERE BLOG_POST_ID = :BLOG_POST_ID
+                    ORDER BY CREATED_AT ASC
+                    """;
+
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<CommentDto> dtoList = ResultSetMapper.toDtoList(rs, CommentDto.class);
+
+            return dtoList;
+        });
+    }
+
+    public static int updateBlogPost(DbAccessInvoker invoker, int blogPostId, String blogId, String title,
+                                     LocalDateTime postedDate, BlogPostStatus status) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    UPDATE BLOG_POSTS SET
+                      TITLE = :TITLE,
+                      POSTED_DATE = :POSTED_DATE,
+                      STATUS = :STATUS,
+                      UPDATED_AT = now()
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                      AND BLOG_POST_ID = :BLOG_POST_ID
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("TITLE", title);
+            params.put("POSTED_DATE", postedDate);
+            params.put("STATUS", status.intValue());
+            params.put("BLOG_POST_ID", blogPostId);
+            params.put("BLOG_ID", blogId);
+            npps.setParameters(params);
+
+            int result = npps.getPreparedStatement().executeUpdate();
+
+            return result;
+        });
+    }
+
+    public static int deleteAllSections(DbAccessInvoker invoker, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    DELETE FROM BLOG_POST_SECTIONS
+                    WHERE BLOG_POST_ID = :BLOG_POST_ID                     
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+
+            int result = npps.getPreparedStatement().executeUpdate();
+
+            return result;
+        });
+    }
 }

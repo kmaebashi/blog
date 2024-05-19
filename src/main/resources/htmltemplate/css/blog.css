@@ -93,7 +93,17 @@ p.sidebar-title {
   font-size: 16px;
 }
 
+#blog-description-area {
+  padding: 5px;
+  background-color: #ffffff;
+}
+
+#blog-description-area p {
+  font-size: 15px;
+}
+
 #profile-area {
+  margin: 5px 0px 0px 0px;
   padding: 5px;
   background-color: #ffffff;
 }
@@ -216,12 +226,20 @@ section.one-comment {
   margin: 1em auto;
 }
 
-p.comment-by {
+p.commented-by {
   text-align: right;
+}
+
+#comment-poster-input {
+  border-width: 1px;
+  border-color: #000000;
+  width: 60%;
+  margin-bottom: 3px;
 }
 
 #comment-textarea {
   border-width: 1px;
+  border-color: #000000;
   width: 80%;
   height: 200px;
 }

@@ -1,10 +1,13 @@
 package com.kmaebashi.blog.controller;
 
 import com.kmaebashi.blog.service.LoginService;
+import com.kmaebashi.blog.service.Util;
+import com.kmaebashi.blog.util.RandomIdGenerator;
 import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.PlainTextResult;
 import com.kmaebashi.nctfw.RedirectResult;
 import com.kmaebashi.nctfw.RoutingResult;
+import com.kmaebashi.blog.common.SessionKey;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
@@ -39,8 +42,9 @@ public class LoginController {
             if (result == null) {
                 String returnUrl = null;
                 HttpSession session = request.getSession(true);
-                session.setAttribute("current_user_id", request.getParameter("userid").trim());
-                returnUrl = (String)session.getAttribute("return_url");
+                session.setAttribute(SessionKey.CURRENT_USER_ID, request.getParameter("userid").trim());
+                session.setAttribute(SessionKey.CSRF_TOKEN, RandomIdGenerator.getRandomId());
+                returnUrl = (String)session.getAttribute(SessionKey.RETURN_URL);
                 if (returnUrl == null) {
                     return new RedirectResult(request.getContextPath() + "/blog_list");
                 } else {

@@ -146,11 +146,22 @@ public class AdminService {
             if (!blogDto.ownerUser.equals(userId)) {
                 throw new BadRequestException("ブログのオーナー以外からのポストです。");
             }
-            int blogPostId = BlogPostDbAccess.getBlogPostSequence(context.getDbAccessInvoker());
-            BlogPostDbAccess.insertBlogPost(context.getDbAccessInvoker(),
-                                        blogPostId, blogId, article.title, LocalDateTime.now(),
-                                        article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT);
+            int blogPostId;
+            if (article.blogPostId == null) {
+                blogPostId = BlogPostDbAccess.getBlogPostSequence(context.getDbAccessInvoker());
+                BlogPostDbAccess.insertBlogPost(context.getDbAccessInvoker(),
+                        blogPostId, blogId, article.title, LocalDateTime.now(),
+                        article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT);
+            } else {
+                blogPostId = article.blogPostId;
+                BlogPostDbAccess.updateBlogPost(context.getDbAccessInvoker(),
+                        blogPostId, blogId, article.title, LocalDateTime.now(),
+                        article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT);
+            }
 
+            if (article.blogPostId != null) {
+                BlogPostDbAccess.deleteAllSections(context.getDbAccessInvoker(), blogPostId);
+            }
             for (int secIdx = 0; secIdx < article.sectionArray.length; secIdx++) {
                 BlogPostDbAccess.insertSection(context.getDbAccessInvoker(), blogPostId, secIdx,
                                                 article.sectionArray[secIdx].body);

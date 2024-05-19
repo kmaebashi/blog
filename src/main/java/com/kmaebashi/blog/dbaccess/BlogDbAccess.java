@@ -2,6 +2,7 @@ package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.dto.BlogDto;
 import com.kmaebashi.blog.dto.BlogPostDto;
+import com.kmaebashi.blog.dto.BlogProfileDto;
 import com.kmaebashi.blog.dto.UserDto;
 import com.kmaebashi.dbutil.NamedParameterPreparedStatement;
 import com.kmaebashi.dbutil.ResultSetMapper;
@@ -29,6 +30,31 @@ public class BlogDbAccess {
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
             BlogDto dto = ResultSetMapper.toDto(rs, BlogDto.class);
+            return dto;
+        });
+    }
+
+    public static BlogProfileDto getBlogAndProfile(DbAccessInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      BLOGS.TITLE,
+                      BLOGS.DESCRIPTION,
+                      PROFILES.NICKNAME,
+                      PROFILES.IMAGE_PATH,
+                      PROFILES.ABOUT_ME
+                    FROM BLOGS
+                    LEFT OUTER JOIN PROFILES
+                      ON BLOGS.OWNER_USER = PROFILES.USER_ID
+                    WHERE BLOGS.BLOG_ID = :BLOG_ID
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            BlogProfileDto dto = ResultSetMapper.toDto(rs, BlogProfileDto.class);
             return dto;
         });
     }
