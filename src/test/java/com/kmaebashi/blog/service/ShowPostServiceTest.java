@@ -52,6 +52,18 @@ class ShowPostServiceTest {
     }
 
     @Test
+    void showPostsByBlogIdTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DocumentResult dr = ShowPostService.showPostsByBlogId(si, "kmaebashiblog", 1);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
     void postCommentTest001() {
         DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
         DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);

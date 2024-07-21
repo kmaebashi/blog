@@ -11,7 +11,6 @@ import com.kmaebashi.blog.dto.BlogDto;
 import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.PhotoDto;
 import com.kmaebashi.blog.dto.BlogPostSectionDto;
-import com.kmaebashi.blog.dto.PhotoDto;
 import com.kmaebashi.jsonparser.ClassMapper;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DocumentResult;

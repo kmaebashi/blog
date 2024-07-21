@@ -3,6 +3,7 @@ package com.kmaebashi.blog.dbaccess;
 import com.kmaebashi.blog.common.BlogPostStatus;
 import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.BlogPostSectionDto;
+import com.kmaebashi.blog.dto.BlogPostSummaryDto;
 import com.kmaebashi.blog.dto.PhotoDto;
 import com.kmaebashi.blog.dto.CommentDto;
 import com.kmaebashi.dbutil.NamedParameterPreparedStatement;
@@ -19,7 +20,7 @@ public class BlogPostDbAccess {
     private BlogPostDbAccess() {
     }
 
-    public static List<BlogPostDto> getBlogPostList(DbAccessInvoker invoker, String blogId) {
+    public static List<BlogPostDto> getBlogPostList(DbAccessInvoker invoker, String blogId, int offset, int limit) {
         return invoker.invoke((context) -> {
             String sql = """
                     SELECT
@@ -28,16 +29,81 @@ public class BlogPostDbAccess {
                     WHERE
                       BLOG_ID = :BLOG_ID
                     ORDER BY POSTED_DATE DESC
-                    LIMIT 10
+                    OFFSET :OFFSET
+                    LIMIT :LIMIT
                     """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("OFFSET", offset);
+            params.put("LIMIT", limit);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<BlogPostDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostDto.class);
+            return dtoList;
+        });
+    }
+
+    public static List<BlogPostSummaryDto> getBlogPostSummaryList(DbAccessInvoker invoker, String blogId, int offset, int limit) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      POST.BLOG_POST_ID,
+                      POST.TITLE,
+                      POST.POSTED_DATE,
+                      SEC.BODY AS SECTION_TEXT,
+                      PHOTOS.PHOTO_ID
+                    FROM BLOG_POSTS POST
+                    LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
+                      ON POST.BLOG_POST_ID = SEC.BLOG_POST_ID
+                    LEFT OUTER JOIN PHOTOS
+                      ON PHOTOS.PHOTO_ID = (
+                        SELECT PHOTO_ID FROM PHOTOS
+                        WHERE PHOTOS.BLOG_POST_ID = POST.BLOG_POST_ID
+                        ORDER BY SECTION_NUMBER, DISPLAY_ORDER
+                        LIMIT 1
+                      )
+                    WHERE
+                      POST.BLOG_ID = :BLOG_ID
+                      AND SEC.SECTION_SEQ = 0
+                    ORDER BY POST.POSTED_DATE DESC
+                    OFFSET :OFFSET
+                    LIMIT :LIMIT
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("OFFSET", offset);
+            params.put("LIMIT", limit);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<BlogPostSummaryDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostSummaryDto.class);
+            return dtoList;
+        });
+    }
+
+    public static int getBlogPostCountByBlogId(DbAccessInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      COUNT(*)
+                    FROM BLOG_POSTS
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                    """;
+
             NamedParameterPreparedStatement npps
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("BLOG_ID", blogId);
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
-            List<BlogPostDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostDto.class);
-            return dtoList;
+            rs.next();
+            int count = rs.getInt("COUNT");
+
+            return count;
         });
     }
 
@@ -396,4 +462,5 @@ public class BlogPostDbAccess {
             return result;
         });
     }
+
 }

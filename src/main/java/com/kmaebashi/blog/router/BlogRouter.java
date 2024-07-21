@@ -72,7 +72,11 @@ public class BlogRouter extends Router {
         this.logger.info("route.." + route);
 
         if (request.getMethod().equals("GET")) {
-            if (route == Route.SHOW_POST) {
+            if (route == Route.BLOG_TOP) {
+                String blogId = (String) params.get("blog_id");
+                return ShowPostController.showPostsByBlogId(invoker, blogId, currentUserId);
+
+            } else if (route == Route.SHOW_POST) {
                 String blogId = (String) params.get("blog_id");
                 int blogPostId = (int) params.get("blog_post_id");
                 return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId);

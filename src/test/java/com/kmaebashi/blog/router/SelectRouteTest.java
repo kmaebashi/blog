@@ -1,5 +1,8 @@
 package com.kmaebashi.blog.router;
 
+import com.kmaebashi.blog.util.Log;
+import com.kmaebashi.simpleloggerimpl.FileLogger;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -7,6 +10,11 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SelectRouteTest {
+    @BeforeAll
+    static void createLogger() throws Exception {
+       Log.setLogger(new FileLogger("./log", "SelectRouteTest"));
+    }
+
     @Test
     void selectTest001() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
@@ -43,7 +51,7 @@ class SelectRouteTest {
     @Test
     void selectTest005() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
-        Route route = SelectRoute.select("kmaebashi/admin/123", params);
+        Route route = SelectRoute.select("kmaebashi/admin?postid=123", params);
         assertEquals(Route.EDIT_POST, route);
         assertEquals("kmaebashi", params.get("blog_id"));
         assertEquals(123, params.get("blog_post_id"));

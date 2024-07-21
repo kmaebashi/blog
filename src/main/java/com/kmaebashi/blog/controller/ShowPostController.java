@@ -18,6 +18,30 @@ import jakarta.servlet.http.HttpSession;
 public class ShowPostController {
     private ShowPostController() {}
 
+    public static RoutingResult showPostsByBlogId(ControllerInvoker invoker, String blogId,
+                                                  String currentUserId) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
+            }
+            DocumentResult result
+                    = ShowPostService.showPostsByBlogId(context.getServiceInvoker(), blogId, page);
+
+            HttpSession session = context.getServletRequest().getSession(false);
+            if (session != null) {
+                String csrfToken = (String) session.getAttribute(SessionKey.CSRF_TOKEN);
+                CsrfUtil.addCsrfToken(result, csrfToken);
+            }
+            return result;
+        });
+    }
+
     public static RoutingResult showPostByPostId(ControllerInvoker invoker, String blogId, int blogPostId,
                                                  String currentUserId) {
         return invoker.invoke((context) -> {

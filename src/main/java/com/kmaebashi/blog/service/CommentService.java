@@ -20,8 +20,9 @@ public class CommentService {
             if (posterUserId != null) {
                 ProfileDto profileDto = ProfileDbAccess.getProfileByUserId(context.getDbAccessInvoker(), posterUserId);
                 if (profileDto == null
-                    || profileDto.nickname.equals(comment.poster)) {
-                    throw new BadRequestException("投稿者のニックネームとログインユーザのニックネームが一致しません。");
+                    || !profileDto.nickname.equals(comment.poster)) {
+                    throw new BadRequestException("投稿者のニックネームとログインユーザのニックネームが一致しません。"
+                            + " 投稿者.." + comment.poster + ", ログインユーザ.." + profileDto.nickname);
                 }
             }
             CommentDbAccess.insertComment(context.getDbAccessInvoker(),

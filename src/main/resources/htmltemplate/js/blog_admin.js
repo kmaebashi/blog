@@ -53,6 +53,7 @@ function imageFileInputOnChange(event) {
       .catch((e) => {
         console.warn
       });
+  event.target.value = "";
 }
 
 function addPhotos(section, newPhotoArray) {

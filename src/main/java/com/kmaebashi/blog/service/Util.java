@@ -42,4 +42,12 @@ public class Util {
 
         return str;
     }
+
+    static String cutString(String src, int len) {
+        if (src.codePointCount(0, src.length()) <= len) {
+            return src;
+        }
+        int charIdx = src.offsetByCodePoints(0, len);
+        return src.substring(0, charIdx) + "…";
+    }
 }

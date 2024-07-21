@@ -2,6 +2,8 @@ package com.kmaebashi.blog.router;
 
 public enum Route {
     BLOG_TOP,
+    POST_LIST_MONTHLY,
+    POST_LIST_DAILY,
     SHOW_POST,
     GET_IMAGE,
     GET_PROFILE_IMAGE,

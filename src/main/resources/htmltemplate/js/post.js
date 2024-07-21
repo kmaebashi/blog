@@ -33,7 +33,8 @@ function postComment() {
     .then(ret => {
       console.log(ret);
       const retObj = JSON.parse(ret);
+      // Firefoxではリロードしてもtextareaの内容が残るので、クリアしておく
+      document.getElementById("comment-textarea").value = "";
       location.reload();
     });
-
 }
