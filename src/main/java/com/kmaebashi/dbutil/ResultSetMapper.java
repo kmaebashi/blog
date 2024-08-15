@@ -61,6 +61,7 @@ public class ResultSetMapper {
                 int colType = rsmd.getColumnType(rsIdx);
                 switch (colType) {
                     case Types.INTEGER:
+                    case Types.BIGINT:
                         if (fieldArray[fieldIndex].getType() == Integer.TYPE) {
                             fieldArray[fieldIndex].setInt(dto, rs.getInt(rsIdx));
                         } else if (fieldArray[fieldIndex].getType() == Integer.class) {

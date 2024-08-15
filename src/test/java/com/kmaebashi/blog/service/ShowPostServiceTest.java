@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,6 +63,49 @@ class ShowPostServiceTest {
         ServiceInvoker si = new ServiceInvokerImpl(sc);
         DocumentResult dr = ShowPostService.showPostsByBlogId(si, "kmaebashiblog", 1);
         String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPostsMonthlyTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DateTimeFormatter monthlyFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate fromDate = LocalDate.parse("202405" + "01", monthlyFormat);
+        LocalDate toDate = fromDate.plusMonths(1);
+        DocumentResult dr = ShowPostService.showPostsDateRange(si, "kmaebashiblog", fromDate, toDate, "2024/05", 1);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPostsDailyTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DateTimeFormatter monthlyFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate fromDate = LocalDate.parse("20240514", monthlyFormat);
+        LocalDate toDate = fromDate.plusDays(1);
+        DocumentResult dr = ShowPostService.showPostsDateRange(si, "kmaebashiblog", fromDate, toDate, "2024/05/14", 1);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void getPostCountEachDayTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DateTimeFormatter monthlyFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate month = LocalDate.parse("20240501", monthlyFormat);
+        JsonResult jr = ShowPostService.getPostCountEachDay(si, "kmaebashiblog", month);
     }
 
     @Test

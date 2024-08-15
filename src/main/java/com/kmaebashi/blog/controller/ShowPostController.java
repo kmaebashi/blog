@@ -13,13 +13,17 @@ import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.JsonResult;
 import com.kmaebashi.nctfw.RoutingResult;
+import com.kmaebashi.simplelogger.Logger;
 import jakarta.servlet.http.HttpSession;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class ShowPostController {
     private ShowPostController() {}
 
-    public static RoutingResult showPostsByBlogId(ControllerInvoker invoker, String blogId,
-                                                  String currentUserId) {
+    public static RoutingResult showPostsByBlogId(ControllerInvoker invoker, String blogId) {
         return invoker.invoke((context) -> {
             int page = 1;
             String pageStr = context.getServletRequest().getParameter("page");
@@ -33,11 +37,66 @@ public class ShowPostController {
             DocumentResult result
                     = ShowPostService.showPostsByBlogId(context.getServiceInvoker(), blogId, page);
 
-            HttpSession session = context.getServletRequest().getSession(false);
-            if (session != null) {
-                String csrfToken = (String) session.getAttribute(SessionKey.CSRF_TOKEN);
-                CsrfUtil.addCsrfToken(result, csrfToken);
+            return result;
+        });
+    }
+
+    private static DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static DateTimeFormatter monthlyDispDateFormat = DateTimeFormatter.ofPattern("yyyy/MM");
+
+    public static RoutingResult showPostsMonthly(ControllerInvoker invoker, String blogId, String monthStr) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
             }
+            LocalDate fromDate;
+            try {
+                fromDate = LocalDate.parse(monthStr + "01", dateFormat);
+            } catch (DateTimeParseException ex) {
+                throw new BadRequestException("日付フォーマットが不正です(" + monthStr + ")");
+            }
+            LocalDate toDate = fromDate.plusMonths(1);
+            String dispDateStr = fromDate.format(monthlyDispDateFormat);
+
+            DocumentResult result
+                    = ShowPostService.showPostsDateRange(context.getServiceInvoker(), blogId,
+                                                         fromDate, toDate, dispDateStr, page);
+
+            return result;
+        });
+    }
+
+    private static DateTimeFormatter dailyDispDateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    public static RoutingResult showPostsDaily(ControllerInvoker invoker, String blogId, String dateStr) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
+            }
+            LocalDate fromDate;
+            try {
+                fromDate = LocalDate.parse(dateStr, dateFormat);
+            } catch (DateTimeParseException ex) {
+                throw new BadRequestException("日付フォーマットが不正です(" + dateStr + ")");
+            }
+            LocalDate toDate = fromDate.plusDays(1);
+            String dispDateStr = fromDate.format(dailyDispDateFormat);
+
+            DocumentResult result
+                    = ShowPostService.showPostsDateRange(context.getServiceInvoker(), blogId,
+                                                         fromDate, toDate, dispDateStr, page);
+
             return result;
         });
     }
@@ -55,6 +114,26 @@ public class ShowPostController {
             }
             return result;
         });
+    }
+
+    public static RoutingResult getPostCountEachDay(ControllerInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            String monthStr = context.getServletRequest().getParameter("month");
+            if (monthStr == null) {
+                throw new BadRequestException("対象月が指定されていません。");
+            }
+            LocalDate month;
+            try {
+                month = LocalDate.parse(monthStr + "01", dateFormat);
+            } catch (DateTimeParseException ex) {
+                throw new BadRequestException("日付フォーマットが不正です(" + monthStr + ")");
+            }
+            JsonResult result
+                    = ShowPostService.getPostCountEachDay(context.getServiceInvoker(), blogId, month);
+
+            return result;
+        });
+
     }
 
     public static RoutingResult postComment(ControllerInvoker invoker, String currentUserId, String blogId) {

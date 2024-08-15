@@ -256,3 +256,34 @@ footer section {
   margin: auto;
   padding: 6px;
 }
+
+td.calendar-left-arrow {
+  cursor: pointer;
+  text-align: center;
+}
+
+td.calendar-header-month {
+  text-align: center;
+}
+
+td.calendar-right-arrow {
+  cursor: pointer;
+  text-align: center;
+}
+
+td.calendar-date {
+  width: 2em;
+  text-align: center;
+}
+
+td.calendar-saturday {
+  background-color: #ccccff;
+}
+td.calendar-sunday {
+  background-color: #ffcccc;
+}
+
+
+td.calendar-target-date {
+  background-color: #ffffcc;
+}

@@ -1,6 +1,7 @@
 package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.common.BlogPostStatus;
+import com.kmaebashi.blog.dto.BlogPostCountEachDayDto;
 import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.BlogPostSectionDto;
 import com.kmaebashi.blog.dto.BlogPostSummaryDto;
@@ -12,6 +13,7 @@ import com.kmaebashi.nctfw.DbAccessInvoker;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -45,9 +47,10 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static List<BlogPostSummaryDto> getBlogPostSummaryList(DbAccessInvoker invoker, String blogId, int offset, int limit) {
+    public static List<BlogPostSummaryDto> getBlogPostSummaryList(DbAccessInvoker invoker, String blogId,
+                                                         LocalDate fromDate, LocalDate toDate, int offset, int limit) {
         return invoker.invoke((context) -> {
-            String sql = """
+            String sql1 = """
                     SELECT
                       POST.BLOG_POST_ID,
                       POST.TITLE,
@@ -67,17 +70,32 @@ public class BlogPostDbAccess {
                     WHERE
                       POST.BLOG_ID = :BLOG_ID
                       AND SEC.SECTION_SEQ = 0
+                      """;
+            String rangeSql = """
+                      AND POST.POSTED_DATE BETWEEN :FROM_DATE AND :TO_DATE
+                    """;
+            String sql2 = """
                     ORDER BY POST.POSTED_DATE DESC
                     OFFSET :OFFSET
                     LIMIT :LIMIT
                     """;
-            NamedParameterPreparedStatement npps
-                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            String sql;
             var params = new HashMap<String, Object>();
+            if (fromDate != null) {
+                sql = sql1 + rangeSql + sql2;
+                params.put("FROM_DATE", fromDate);
+                params.put("TO_DATE", toDate);
+            } else {
+                sql = sql1 + sql2;
+            }
             params.put("BLOG_ID", blogId);
             params.put("OFFSET", offset);
             params.put("LIMIT", limit);
+
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             npps.setParameters(params);
+
             ResultSet rs = npps.getPreparedStatement().executeQuery();
             List<BlogPostSummaryDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostSummaryDto.class);
             return dtoList;
@@ -104,6 +122,33 @@ public class BlogPostDbAccess {
             int count = rs.getInt("COUNT");
 
             return count;
+        });
+    }
+
+    public static List<BlogPostCountEachDayDto> getBlogPostCountByMonth(DbAccessInvoker invoker, String blogId, LocalDate month) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      CAST(POSTED_DATE AS DATE) AS GROUP_DATE,
+                      COUNT(*) AS NUM_OF_POSTS
+                    FROM BLOG_POSTS
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                      AND POSTED_DATE BETWEEN :FROM_DATE AND :TO_DATE
+                    GROUP BY GROUP_DATE
+                    """;
+
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("FROM_DATE", month);
+            params.put("TO_DATE", month.plusMonths(1));
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+
+            List<BlogPostCountEachDayDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostCountEachDayDto.class);
+            return dtoList;
         });
     }
 

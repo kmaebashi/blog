@@ -11,13 +11,13 @@ public class SelectRoute {
     private SelectRoute() {}
 
     private static Pattern blogTopPattern = Pattern.compile("^\\w+$");
-    private static Pattern monthlyPattern = Pattern.compile("^\\w+/(\\d\\d\\d\\d\\d\\d)$");
-    private static Pattern daylyPattern = Pattern.compile("^\\/w+/(\\d\\d\\d\\d\\d\\d\\d\\d)$");
+    private static Pattern monthlyPattern = Pattern.compile("^(\\w+)/(\\d\\d\\d\\d\\d\\d)$");
+    private static Pattern dailyPattern = Pattern.compile("^(\\w+)/(\\d\\d\\d\\d\\d\\d\\d\\d)$");
     private static Pattern postPattern = Pattern.compile("^(\\w+)/post/(\\d+)$");
     private static Pattern getImagePattern = Pattern.compile("^(\\w+)/api/getimage/(\\d+)/(\\d+)$");
     private static Pattern getProfileImagePattern = Pattern.compile("^(\\w+)/api/getprofileimage$");
     private static Pattern adminPattern = Pattern.compile("^(\\w+)/admin$");
-    private static Pattern editPostPattern = Pattern.compile("^(\\w+)/admin\\?postid=(\\d+)$");
+    private static Pattern getPostCountEachDayPattern = Pattern.compile("^(\\w+)/api/getpostcounteachday$");
     private static Pattern postImagesPattern = Pattern.compile("^(\\w+)/api/postimages$");
     private static Pattern getImageAdminPattern = Pattern.compile("^(\\w+)/api/getimageadmin/(\\d+)$");
     private static Pattern postArticlePattern = Pattern.compile("^(\\w+)/api/postarticle$");
@@ -42,10 +42,16 @@ public class SelectRoute {
             }
             matcher = monthlyPattern.matcher(path);
             if (matcher.matches()) {
-
-
+                params.put("blog_id", matcher.group(1));
+                params.put("month", matcher.group(2));
+                return Route.POST_LIST_MONTHLY;
             }
-
+            matcher = dailyPattern.matcher(path);
+            if (matcher.matches()) {
+                params.put("blog_id", matcher.group(1));
+                params.put("date", matcher.group(2));
+                return Route.POST_LIST_DAILY;
+            }
             matcher = postPattern.matcher(path);
             if (matcher.matches()) {
                 params.put("blog_id", matcher.group(1));
@@ -77,13 +83,11 @@ public class SelectRoute {
                 params.put("blog_id", matcher.group(1));
                 return Route.ADMIN;
             }
-            matcher = editPostPattern.matcher(path);
+            matcher = getPostCountEachDayPattern.matcher(path);
             if (matcher.matches()) {
-                params.put("blog_id", matcher.group(1));
-                String postIdStr = matcher.group(2);
-                int postId = Integer.parseInt(postIdStr);
-                params.put("blog_post_id", postId);
-                return Route.EDIT_POST;
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                return Route.GET_POST_COUNT_EACH_DAY;
             }
             matcher = postImagesPattern.matcher(path);
             if (matcher.matches()) {

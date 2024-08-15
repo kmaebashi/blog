@@ -1,6 +1,7 @@
 package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.BlogTestUtil;
+import com.kmaebashi.blog.dto.BlogPostCountEachDayDto;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfwimpl.DbAccessContextImpl;
@@ -12,8 +13,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 class BlogPostDbAccessTest {
     private static Connection conn;
@@ -37,5 +39,16 @@ class BlogPostDbAccessTest {
 
         int count = BlogPostDbAccess.getBlogPostCountByBlogId(invoker, "kmaebashiblog");
         logger.info("blog post count.." + count);
+    }
+
+    @Test
+    void getBlogPostCountByMonth001() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate fromDate = LocalDate.parse("20240501", dateFormat);
+        List<BlogPostCountEachDayDto> dtoList
+                = BlogPostDbAccess.getBlogPostCountByMonth(invoker, "kmaebashiblog", fromDate);
     }
 }

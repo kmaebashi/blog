@@ -49,14 +49,6 @@ class SelectRouteTest {
     }
 
     @Test
-    void selectTest005() throws Exception {
-        HashMap<String, Object> params = new HashMap<>();
-        Route route = SelectRoute.select("kmaebashi/admin?postid=123", params);
-        assertEquals(Route.EDIT_POST, route);
-        assertEquals("kmaebashi", params.get("blog_id"));
-        assertEquals(123, params.get("blog_post_id"));
-    }
-    @Test
     void selectTest006() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
         Route route = SelectRoute.select("api/dologin", params);
@@ -87,4 +79,34 @@ class SelectRouteTest {
         assertEquals(Route.LOGIN, route);
     }
 
+    @Test
+    void selectTest010() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("kmaebashi/202407", params);
+        assertEquals(Route.POST_LIST_MONTHLY, route);
+        String blogId = (String)params.get("blog_id");
+        assertEquals("kmaebashi", blogId);
+        String month = (String)params.get("month");
+        assertEquals("202407", month);
+    }
+
+    @Test
+    void selectTest011() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("kmaebashi/20240721", params);
+        assertEquals(Route.POST_LIST_DAILY, route);
+        String blogId = (String)params.get("blog_id");
+        assertEquals("kmaebashi", blogId);
+        String date = (String)params.get("date");
+        assertEquals("20240721", date);
+    }
+
+    @Test
+    void selectTest012() throws Exception {
+        HashMap<String, Object> params = new HashMap<>();
+        Route route = SelectRoute.select("kmaebashi/api/getpostcounteachday", params);
+        assertEquals(Route.GET_POST_COUNT_EACH_DAY, route);
+        String blogId = (String)params.get("blog_id");
+        assertEquals("kmaebashi", blogId);
+    }
 }

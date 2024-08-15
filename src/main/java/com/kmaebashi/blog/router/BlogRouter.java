@@ -74,7 +74,16 @@ public class BlogRouter extends Router {
         if (request.getMethod().equals("GET")) {
             if (route == Route.BLOG_TOP) {
                 String blogId = (String) params.get("blog_id");
-                return ShowPostController.showPostsByBlogId(invoker, blogId, currentUserId);
+                return ShowPostController.showPostsByBlogId(invoker, blogId);
+            } else if (route == Route.POST_LIST_MONTHLY) {
+                String blogId = (String) params.get("blog_id");
+                String monthStr = (String) params.get("month");
+                return ShowPostController.showPostsMonthly(invoker, blogId, monthStr);
+
+            } else if (route == Route.POST_LIST_DAILY) {
+                String blogId = (String) params.get("blog_id");
+                String dateStr = (String) params.get("date");
+                return ShowPostController.showPostsDaily(invoker, blogId, dateStr);
 
             } else if (route == Route.SHOW_POST) {
                 String blogId = (String) params.get("blog_id");
@@ -93,6 +102,10 @@ public class BlogRouter extends Router {
                 return ImageController.getProfileImage(invoker, blogId, this.resizedProfileImageRoot);
             } else if (route == Route.LOGIN) {
                 result = LoginController.showPage(invoker, path);
+            } else if (route == Route.GET_POST_COUNT_EACH_DAY) {
+                logger.info("route == Route.GET_POST_COUNT_EACH_DAY");
+                String blogId = (String)params.get("blog_id");
+                result = ShowPostController.getPostCountEachDay(invoker, blogId);
             } else if (route == Route.BLOG_LIST) {
                 if (currentUserId == null) {
                     session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
@@ -102,7 +115,7 @@ public class BlogRouter extends Router {
                 } else {
                     result = BlogListController.showPage(invoker, currentUserId);
                 }
-            } else if (route == Route.ADMIN || route == Route.EDIT_POST) {
+            } else if (route == Route.ADMIN) {
                 if (currentUserId == null) {
                     session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
                     String loginPath = request.getContextPath() + "/login";
