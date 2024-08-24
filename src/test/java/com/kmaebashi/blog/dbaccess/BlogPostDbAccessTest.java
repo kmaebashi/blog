@@ -37,7 +37,19 @@ class BlogPostDbAccessTest {
         DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
         DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
 
-        int count = BlogPostDbAccess.getBlogPostCountByBlogId(invoker, "kmaebashiblog");
+        int count = BlogPostDbAccess.getBlogPostCountByBlogId(invoker, "kmaebashiblog", null, null);
+        logger.info("blog post count.." + count);
+    }
+
+    @Test
+    void getBlogPostCountByBlogId002() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate fromDate = LocalDate.parse("20240501", dateFormat);
+        LocalDate toDate = LocalDate.parse("20240601", dateFormat);
+        int count = BlogPostDbAccess.getBlogPostCountByBlogId(invoker, "kmaebashiblog", fromDate, toDate);
         logger.info("blog post count.." + count);
     }
 

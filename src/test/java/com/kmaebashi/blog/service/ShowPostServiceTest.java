@@ -49,7 +49,8 @@ class ShowPostServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(5), "kmaebashi");
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(5), "kmaebashi",
+                                                             "http://localhost:8080/blog/post/5");
         String html = dr.getDocument().html();
     }
 
@@ -74,9 +75,9 @@ class ShowPostServiceTest {
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
         DateTimeFormatter monthlyFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
-        LocalDate fromDate = LocalDate.parse("202405" + "01", monthlyFormat);
+        LocalDate fromDate = LocalDate.parse("202407" + "01", monthlyFormat);
         LocalDate toDate = fromDate.plusMonths(1);
-        DocumentResult dr = ShowPostService.showPostsDateRange(si, "kmaebashiblog", fromDate, toDate, "2024/05", 1);
+        DocumentResult dr = ShowPostService.showPostsDateRange(si, "kmaebashiblog", fromDate, toDate, "2024/07", 1);
         String html = dr.getDocument().html();
     }
 

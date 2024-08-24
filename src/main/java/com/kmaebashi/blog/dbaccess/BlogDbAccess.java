@@ -38,6 +38,7 @@ public class BlogDbAccess {
         return invoker.invoke((context) -> {
             String sql = """
                     SELECT
+                      BLOGS.BLOG_ID,
                       BLOGS.TITLE,
                       BLOGS.DESCRIPTION,
                       PROFILES.NICKNAME,

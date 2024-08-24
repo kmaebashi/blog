@@ -1,21 +1,36 @@
 "use strict";
 
 class Calendar {
-  constructor(targetElement, date) {
+  constructor(targetElement, date, pageType) {
     this.targetElement = targetElement;
     this.date = date;
-    this.render();
+
+    if (pageType === "TOP") {
+      const match = window.location.pathname.match(/^\/\w+\/(\w+)$/);
+      this.blogUrl = "./" + match[1] + "/";
+    } else if (pageType === "POST") {
+      this.blogUrl = "../";
+    } else if (pageType === "DATE") {
+      this.blogUrl = "./";
+    }
+    this.getDataAndRender();
   }
 
-  setDatePickedCallback(callback) {
-    this.datePickedCallback = callback;
+  getDataAndRender() {
+    const month = Calendar.#createMonthStr(this.date);
+
+    fetch(this.blogUrl + "api/getpostcounteachday?month=" + month, {
+      method: "GET"
+    })
+    .then(response => {
+      return response.text();
+    })
+    .then(ret => {
+      this.render(JSON.parse(ret));
+    });
   }
 
-  getCurrentDate() {
-    return this.date;
-  }
-
-  render() {
+  render(postCountData) {
     while (this.targetElement.firstChild ){
       this.targetElement.removeChild(this.targetElement.firstChild);
     }
@@ -34,7 +49,10 @@ class Calendar {
 
     const monthTd = document.createElement("td");
     monthTd.colSpan = 5;
-    monthTd.innerText = this.date.getFullYear() + "年" + (this.date.getMonth() + 1) + "月";
+    const monthAElem = document.createElement("a");
+    monthAElem.href = this.blogUrl + Calendar.#createMonthStr(this.date);
+    monthAElem.innerText = this.date.getFullYear() + "年" + (this.date.getMonth() + 1) + "月";
+    monthTd.appendChild(monthAElem);
     monthTd.classList.add("calendar-header-month");
     headTr.appendChild(monthTd);
 
@@ -60,7 +78,15 @@ class Calendar {
           if (nth == 0 && youbi == firstYoubi) {
             nth = 1;
           }
-          tdElem.innerText = "" + nth;
+          const postCountObj = postCountData.find(elem => elem.day === nth);
+          if (postCountObj === undefined) {
+            tdElem.innerText = "" + nth;
+          } else {
+            const aElem = document.createElement("a");
+            aElem.href = this.blogUrl + Calendar.#createMonthStr(this.date) + ("0" + nth).slice(-2);
+            aElem.innerText = "" + nth;
+            tdElem.appendChild(aElem);
+          }
           tdElem.setAttribute("data-date", nth);
           tdElem.classList.add("calendar-date");
           if (youbi == 0) {
@@ -72,7 +98,6 @@ class Calendar {
           if (nth == this.date.getDate()) {
             tdElem.classList.add("calendar-target-date");
           }
-          tdElem.onclick = this.dateClicked.bind(this);
           nth++;
           if (nth > lastNth) {
             endFlag = true;
@@ -101,7 +126,7 @@ class Calendar {
     }
     newDate = Calendar.#fixLastDate(newYear, newMonth, this.date.getDate());
     this.date = new Date(newYear, newMonth, newDate);
-    this.render();
+    this.getDataAndRender();
   }
 
   rightArrowClicked() {
@@ -117,16 +142,7 @@ class Calendar {
     }
     newDate = Calendar.#fixLastDate(newYear, newMonth, this.date.getDate());
     this.date = new Date(newYear, newMonth, newDate);
-    this.render();
-  }
-
-  dateClicked(e) {
-    const date = e.target.dataset.date;
-    this.date.setDate(parseInt(date));
-    this.render();
-    if (this.datePickedCallback !== undefined && this.datePickedCallback !== null) {
-      this.datePickedCallback(this.date);
-    }
+    this.getDataAndRender();
   }
 
   static #getLastNth(date) {
@@ -153,5 +169,9 @@ class Calendar {
     }
 
     return newDate;
+  }
+
+  static #createMonthStr(date) {
+    return date.getFullYear() + ("0" + (date.getMonth() + 1)).slice(-2);
   }
 }

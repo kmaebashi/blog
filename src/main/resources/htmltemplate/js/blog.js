@@ -10,17 +10,17 @@ Object.freeze(PageType);
 let currentPageType;
 
 window.onload = function() {
-  if (window.location.pathname.match(/^\/\w+\/\w+$/)) {
-    currentPageType = PageType.TOP;
-  } else if (window.location.pathname.match(/^\/\w+\/\w+\/post\/\d+$/)) {
-    currentPageType = PageType.POST;
-  } else if (window.location.pathname.match(/^\/\w+\/\w+\/\d\d\d\d\d\d$/)
-          || window.location.pathname.match(/^\/\w+\/\w+\/\d\d\d\d\d\d\d\d$/)) {
-    currentPageType = PageType.DATE;
-  } else {
-    console.log("URLが変です");
-  }
+  const propElem = document.getElementById("properties");
+  const date = parseDateYYYYMMDD(propElem.dataset.postedDate);
   const calendarElem = document.getElementById("calendar-area");
-  const calendar = new Calendar(calendarElem, new Date());
+  const calendar = new Calendar(calendarElem, date, propElem.dataset.pageType);
+}
+
+function parseDateYYYYMMDD(str) {
+  const year = parseInt(str.substring(0, 4));
+  const month = parseInt(str.substring(4, 6)) - 1;
+  const day = parseInt(str.substring(6, 8));
+
+  return new Date(year, month, day);
 }
 

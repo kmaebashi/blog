@@ -28,7 +28,7 @@ function postComment() {
         body: JSON.stringify(postData)
     })
     .then(response => {
-      return response.text()
+      return response.text();
     })
     .then(ret => {
       console.log(ret);

@@ -30,6 +30,7 @@ public class BlogPostDbAccess {
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
+                      AND STATUS = 2
                     ORDER BY POSTED_DATE DESC
                     OFFSET :OFFSET
                     LIMIT :LIMIT
@@ -70,6 +71,7 @@ public class BlogPostDbAccess {
                     WHERE
                       POST.BLOG_ID = :BLOG_ID
                       AND SEC.SECTION_SEQ = 0
+                      AND STATUS = 2
                       """;
             String rangeSql = """
                       AND POST.POSTED_DATE BETWEEN :FROM_DATE AND :TO_DATE
@@ -102,20 +104,34 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static int getBlogPostCountByBlogId(DbAccessInvoker invoker, String blogId) {
+    public static int getBlogPostCountByBlogId(DbAccessInvoker invoker, String blogId, LocalDate startDate, LocalDate endDate) {
         return invoker.invoke((context) -> {
-            String sql = """
+            String sql1 = """
                     SELECT
                       COUNT(*)
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
+                      AND STATUS = 2
                     """;
+            String rangeSql = """
+                      AND BLOG_POSTS.POSTED_DATE BETWEEN :FROM_DATE AND :TO_DATE 
+                    """;
+            String sql;
+            if (startDate == null) {
+                sql = sql1;
+            } else {
+                sql = sql1 + rangeSql;
+            }
 
             NamedParameterPreparedStatement npps
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("BLOG_ID", blogId);
+            if (startDate != null) {
+                params.put("FROM_DATE", startDate);
+                params.put("TO_DATE", endDate);
+            }
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
             rs.next();
@@ -135,6 +151,7 @@ public class BlogPostDbAccess {
                     WHERE
                       BLOG_ID = :BLOG_ID
                       AND POSTED_DATE BETWEEN :FROM_DATE AND :TO_DATE
+                      AND STATUS = 2
                     GROUP BY GROUP_DATE
                     """;
 

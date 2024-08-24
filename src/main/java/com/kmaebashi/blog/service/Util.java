@@ -33,7 +33,8 @@ public class Util {
 
     static String escapeHtml2(String src) {
         String escaped = Util.escapeHtml(src);
-        return nl2Br(escaped);
+        String linkCreated = Util.createLinkAnchor(escaped);
+        return nl2Br(linkCreated);
     }
 
     static String nl2Br(String str) {
@@ -50,4 +51,10 @@ public class Util {
         int charIdx = src.offsetByCodePoints(0, len);
         return src.substring(0, charIdx) + "…";
     }
+
+    public static String createLinkAnchor(String src) {
+        return  src.replaceAll("(http://|https://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+]+",
+                "<a href=\"$0\">$0</a>");
+    }
+
 }

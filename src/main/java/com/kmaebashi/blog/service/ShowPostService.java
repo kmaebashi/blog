@@ -43,7 +43,7 @@ public class ShowPostService {
     }
 
     public static DocumentResult showPostByPostId(ServiceInvoker invoker, String blogId, int blogPostId,
-                                                  String currentUserId) {
+                                                  String currentUserId, String url) {
         return invoker.invoke((context) -> {
             BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
             BlogPostDto blogPostDto
@@ -55,14 +55,15 @@ public class ShowPostService {
             Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/post/post.html");
             Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
             ShowPostService.setProperties(doc, PathLevel.POST, blogPostDto.postedDate.toLocalDate());
-            ShowPostService.renderBlogTitle(doc, blogDto);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.POST);
             ShowPostService.renderHeadTitlePost(doc, blogDto, blogPostDto);
             ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.POST);
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.POST);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.POST);
-            ShowPostService.renderBlogPost(context, doc, blogId, blogPostDto);
+            ShowPostService.renderBlogPost(context, doc, blogId, blogPostDto, url);
             ShowPostService.renderOlderNewerLink(context, doc, blogId, blogPostId);
             ShowPostService.renderCommentArea(context, doc, blogPostId, currentUserId);
+            ShowPostService.renderForFacebook(doc, url);
 
             return new DocumentResult(doc);
         });
@@ -81,12 +82,12 @@ public class ShowPostService {
             ShowPostService.setProperties(doc, PathLevel.TOP, LocalDate.now());
             replacePathForBlogList(doc, true);
             ShowPostService.renderHeadTitleTop(doc, blogDto, page);
-            ShowPostService.renderBlogTitle(doc, blogDto);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.TOP);
             ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.TOP);
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.TOP);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.TOP);
             ShowPostService.renderBlogPostList(context, doc, blogId, blogPostSummaryDtoList, PathLevel.TOP);
-            ShowPostService.renderListOlderNewerLink(context, doc, blogId, page);
+            ShowPostService.renderListOlderNewerLink(context, doc, blogId, null, null, page);
 
             return new DocumentResult(doc);
         });
@@ -106,12 +107,12 @@ public class ShowPostService {
             replacePathForBlogList(doc, false);
             ShowPostService.setProperties(doc, PathLevel.DATE, startDate);
             ShowPostService.renderHeadTitleList(doc, blogDto, dispDateStr, page);
-            ShowPostService.renderBlogTitle(doc, blogDto);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.DATE);
             ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
             ShowPostService.renderBlogPostList(context, doc, blogId, blogPostSummaryDtoList, PathLevel.DATE);
-            ShowPostService.renderListOlderNewerLink(context, doc, blogId, page);
+            ShowPostService.renderListOlderNewerLink(context, doc, blogId, startDate, endDate, page);
 
             return new DocumentResult(doc);
         });
@@ -159,8 +160,18 @@ public class ShowPostService {
     }
 
 
-    private static void renderBlogTitle(Document doc, BlogProfileDto blogDto) {
+    private static void renderBlogTitle(Document doc, BlogProfileDto blogDto, PathLevel pathLevel) {
         Element blogTitleElem = doc.getElementById("blog-title");
+        String topUrl;
+        if (pathLevel == PathLevel.TOP) {
+            topUrl = "./" + blogDto.blogId;
+        } else if (pathLevel == PathLevel.DATE) {
+            topUrl = "../" + blogDto.blogId;
+        } else {
+            assert pathLevel == PathLevel.POST;
+            topUrl = "../../" + blogDto.blogId;
+        }
+        blogTitleElem.attr("href", topUrl);
         blogTitleElem.text(blogDto.title);
 
         Element blogDescriptionAreaElem = doc.getElementById("blog-description-area");
@@ -179,8 +190,11 @@ public class ShowPostService {
     }
 
     private static void renderRecentPosts(ServiceContext context, Document doc, String blogId, PathLevel pathLevel) {
+        Element calendarElem = doc.getElementById("calendar-area");
+        calendarElem.empty();
+
         List<BlogPostDto> blogPostList = BlogPostDbAccess.getBlogPostList(context.getDbAccessInvoker(), blogId, 0, 10);
-        Element ulElem = JsoupUtil.getFirst(doc.select("#recent-posts-area ul"));
+        Element ulElem = doc.select("#recent-posts-area ul").first();
         ulElem.empty();
 
         for (BlogPostDto blogPostDto : blogPostList) {
@@ -212,7 +226,10 @@ public class ShowPostService {
 
     private static DateTimeFormatter postedDateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
-    private static void renderBlogPost(ServiceContext context, Document doc, String blogId, BlogPostDto blogPostDto) {
+    private static void renderBlogPost(ServiceContext context, Document doc, String blogId, BlogPostDto blogPostDto, String url) {
+        ShowPostService.setMetaProperty(doc, "og:url", url);
+        ShowPostService.setMetaProperty(doc, "og:title", blogPostDto.title);
+
         Element oneBlogPostElem = JsoupUtil.getFirst(doc.getElementsByClass("one-blog-post"));
 
         Element titleElem = JsoupUtil.getFirst(oneBlogPostElem.getElementsByClass("blog-post-title"));
@@ -226,6 +243,7 @@ public class ShowPostService {
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostDto.blogPostId);
         int sectionNumber = 1;
+        String firstPhotoPath = null;
         for (BlogPostSectionDto sectionDto : sectionList) {
             appendParagraph(doc, postBodyElem, sectionDto.body);
             List<PhotoDto> photoList
@@ -235,13 +253,20 @@ public class ShowPostService {
                 Element photoPElem = doc.createElement("p");
                 photoPElem.attr("class", "photo");
                 Element imgElem = doc.createElement("img");
-                imgElem.attr("src", getBlogRoot(blogId, PathLevel.POST) + "api/getimage/"
-                             + photoDto.blogPostId + "/" + photoDto.photoId);
+                imgElem.attr("src",  getBlogRoot(blogId, PathLevel.POST) + "api/getimage/"
+                        + photoDto.blogPostId + "/" + photoDto.photoId);
+                if (firstPhotoPath == null) {
+                    firstPhotoPath = "api/getimage/" + photoDto.blogPostId + "/" + photoDto.photoId;
+                }
                 photoPElem.appendChild(imgElem);
                 postBodyElem.appendChild(photoPElem);
                 appendParagraph(doc, postBodyElem, photoDto.caption);
             }
             sectionNumber++;
+        }
+        if (firstPhotoPath != null) {
+            String photoUrl = url.replaceFirst("post/\\d+$", firstPhotoPath);
+            ShowPostService.setMetaProperty(doc, "og:image", photoUrl);
         }
     }
 
@@ -319,7 +344,9 @@ public class ShowPostService {
         String[] lines = text.replace("\\r", "").split("\\n");
         for (String line : lines) {
             Element pElem = doc.createElement("p");
-            pElem.text(line);
+            String escaped = Util.escapeHtml(line);
+            String html = Util.createLinkAnchor(escaped);
+            pElem.html(html);
             parent.appendChild(pElem);
         }
     }
@@ -348,9 +375,10 @@ public class ShowPostService {
         }
     }
 
-    private static void renderListOlderNewerLink(ServiceContext context, Document doc, String blogId, int page)
+    private static void renderListOlderNewerLink(ServiceContext context, Document doc, String blogId,
+                                                 LocalDate startDate, LocalDate endDate, int page)
     {
-        int postCount = BlogPostDbAccess.getBlogPostCountByBlogId(context.getDbAccessInvoker(), blogId);
+        int postCount = BlogPostDbAccess.getBlogPostCountByBlogId(context.getDbAccessInvoker(), blogId, startDate, endDate);
 
         Element newerOlderDiv = doc.getElementsByClass("newer-older-area").first();
         Element leftNaviElem = newerOlderDiv.getElementsByClass("left-navi").first();
@@ -395,5 +423,15 @@ public class ShowPostService {
             posterElem.attr("value", audienceProfile.nickname);
             posterElem.attr("disabled", true);
         }
+    }
+
+    private static void setMetaProperty(Document doc, String propertyName, String value) {
+        Element metaElem = doc.select("meta[property=\"" + propertyName + "\"]").first();
+        metaElem.attr("content", value);
+    }
+
+    private static void renderForFacebook(Document doc, String url) {
+        Element shareButtonElem = doc.getElementById("facebook-share-button");
+        shareButtonElem.dataset().put("href", url);
     }
 }

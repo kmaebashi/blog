@@ -48,8 +48,10 @@ header section {
   margin: auto;
   padding: 6px;
 }
-header section p.blog-title {
+header section a.blog-title {
   margin: auto;
+  text-decoration: none;
+  color: #ffffff;
   font-size: 30px;
   font-weight: bold;
 }
