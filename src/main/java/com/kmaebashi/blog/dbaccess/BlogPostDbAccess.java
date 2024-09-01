@@ -274,11 +274,13 @@ public class BlogPostDbAccess {
     }
 
     public static int linkPhotoToBlogPost(DbAccessInvoker invoker,
-                                          int photoId, String blogId, int blogPostId, String caption) {
+                                          int photoId, String blogId, int blogPostId, int displayOrder,
+                                          String caption) {
         return invoker.invoke((context) -> {
             String sql = """
                     UPDATE PHOTOS SET
                       BLOG_POST_ID = :BLOG_POST_ID,
+                      DISPLAY_ORDER = :DISPLAY_ORDER,
                       CAPTION = :CAPTION,
                       UPDATED_AT = now()
                     WHERE
@@ -289,6 +291,7 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("BLOG_POST_ID", blogPostId);
+            params.put("DISPLAY_ORDER", displayOrder);
             params.put("CAPTION", caption);
             params.put("BLOG_ID", blogId);
             params.put("PHOTO_ID", photoId);

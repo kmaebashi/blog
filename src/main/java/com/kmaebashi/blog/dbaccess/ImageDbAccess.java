@@ -28,7 +28,7 @@ public class ImageDbAccess {
     }
 
     public static int insertPhoto(DbAccessInvoker invoker, int photoId, String blogId, int sectionNumber,
-                                  String path, int displayOrder) {
+                                  String path) {
         return invoker.invoke((context) -> {
             String sql = """
                     INSERT INTO PHOTOS (
@@ -36,7 +36,6 @@ public class ImageDbAccess {
                       BLOG_ID,
                       SECTION_NUMBER,
                       PATH,
-                      DISPLAY_ORDER,
                       CREATED_AT,
                       UPDATED_AT
                     ) VALUES (
@@ -44,7 +43,6 @@ public class ImageDbAccess {
                       :BLOG_ID,
                       :SECTION_NUMBER,
                       :PATH,
-                      :DISPLAY_ORDER,
                       now(),
                       now()
                     )
@@ -57,7 +55,6 @@ public class ImageDbAccess {
             params.put("BLOG_ID", blogId);
             params.put("SECTION_NUMBER", sectionNumber);
             params.put("PATH", path);
-            params.put("DISPLAY_ORDER", displayOrder);
 
             npps.setParameters(params);
             int result = npps.getPreparedStatement().executeUpdate();

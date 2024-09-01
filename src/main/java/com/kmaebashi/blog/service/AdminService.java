@@ -110,7 +110,6 @@ public class AdminService {
         blogPostTitleElem.attr("value", blogPostDto.title);
 
         Element templateSectionElem = doc.getElementById("hidden-section-box");
-        templateSectionElem.remove();
         Element sectionContainerElem = doc.getElementById("section-container");
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostId);
@@ -132,8 +131,10 @@ public class AdminService {
             Element templatePhotoElem = newSectionElem.getElementsByClass("one-photo").first();
             templatePhotoElem.remove();
             List<JsonElement> jsonPhotoList = new ArrayList<>();
+            int photoIndex = 0;
             for (PhotoDto photoDto : photoDtoList) {
                 Element newPhotoElem = templatePhotoElem.clone();
+                photoIndex++;
                 Element imgElem = newPhotoElem.getElementsByClass("photo").first();
                 imgElem.attr("src", "./api/getimageadmin/" + photoDto.photoId);
                 Element captionElem = newPhotoElem.getElementsByClass("photo-caption").first();
@@ -186,9 +187,11 @@ public class AdminService {
             for (int secIdx = 0; secIdx < article.sectionArray.length; secIdx++) {
                 BlogPostDbAccess.insertSection(context.getDbAccessInvoker(), blogPostId, secIdx,
                                                 article.sectionArray[secIdx].body);
+                int displayOrder = 1;
                 for (ArticlePhoto photo : article.sectionArray[secIdx].photos) {
                     BlogPostDbAccess.linkPhotoToBlogPost(context.getDbAccessInvoker(),
-                            photo.id, blogId, blogPostId, photo.caption);
+                            photo.id, blogId, blogPostId, displayOrder, photo.caption);
+                    displayOrder++;
                 }
             }
             PostArticleStatus status = new PostArticleStatus(ApiStatus.SUCCESS, "投稿成功", blogPostId);

@@ -47,7 +47,6 @@ public class ImageService {
             Path originalImageDir = createImageDirectory(originalImageRoot, blogId, nowDate);
             Path resizedImageDir = createImageDirectory(resizedImageRoot, blogId, nowDate);
 
-            int displayOrder = 1;
             List<JsonElement> imageList = new ArrayList<>();
             for (Part part : partList) {
                 String srcFileName = part.getSubmittedFileName();
@@ -73,11 +72,11 @@ public class ImageService {
                 int pathCount = orgImagePath.getNameCount();
                 Path dbPath = orgImagePath.subpath(pathCount - 3, pathCount);
                 int ret = ImageDbAccess.insertPhoto(context.getDbAccessInvoker(),
-                                    photoSequence, blogId, sectionNumber, dbPath.toString(), displayOrder);
-                displayOrder++;
+                                    photoSequence, blogId, sectionNumber, dbPath.toString());
 
                 HashMap<String, JsonElement> imageMap = new HashMap<>();
                 imageMap.put("id", JsonValue.createIntValue(photoSequence));
+                imageMap.put("caption", JsonValue.createStringValue(""));
                 imageList.add(JsonObject.newInstance(imageMap));
             }
             JsonArray array = JsonArray.newInstance(imageList);

@@ -16,7 +16,75 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   const publishButton = document.getElementById("publish-button");
   publishButton.onclick = publish;
+
+  const sectionBoxElemList = document.getElementById("section-container")
+                                     .getElementsByClassName("section-box");
+  for (let i = 0; i < sectionBoxElemList.length; i++) {
+    refreshSectionAttr(sectionBoxElemList[i], i + 1);
+  }
 });
+
+function refreshSectionAttr(secElem, section) {
+  secElem.id = "section-box" + section;
+  secElem.dataset.section = section;
+
+  const photoElemList = secElem.getElementsByClassName("one-photo");
+  for (let i = 0; i < photoElemList.length; i++) {
+    photoElemList[i]
+
+    const deleteButtonElem = photoElemList[i].getElementsByClassName("photo-delete-button")[0];
+    deleteButtonElem.dataset.section = section;
+    deleteButtonElem.dataset.photoIndex = i;
+    deleteButtonElem.onclick = deletePhoto;
+
+    const upButtonElem = photoElemList[i].getElementsByClassName("photo-up-button")[0];
+    if (i === 0) {
+      upButtonElem.remove();
+    } else {
+      upButtonElem.dataset.section = section;
+      upButtonElem.dataset.photoIndex = i;
+      upButtonElem.onclick = upPhoto;
+    }
+
+    const downButtonElem = photoElemList[i].getElementsByClassName("photo-down-button")[0];
+    if (i === photoElemList.length - 1) {
+      downButtonElem.remove();
+    } else {
+      downButtonElem.dataset.section = section;
+      downButtonElem.dataset.photoIndex = i;
+      downButtonElem.onclick = downPhoto;
+    }
+  }
+}
+
+// elemはclassがsection-boxのdiv要素
+function setPhotoButtonHandler(elem) {
+  const section = parseInt(elem.dataset.section);
+  const photoIndex = parseInt(elem.dataset.photoIndex);
+
+  const deleteButtonElem = elem.getElementsByClassName("photo_delete_button")[0];
+  deleteButtonElem.dataset.section = section;
+  deleteButtonElem.dataset.photoIndex = photoIndex;
+  deleteButtonElem.onclick = deletePhoto;
+
+  const upButtonElem = elem.getElementsByClassName("photo_up_button")[0];
+  if (photoIndex === 0) {
+    upButtonElem.remove();
+  } else {
+    upButtonElem.dataset.section = section;
+    upButtonElem.dataset.photoIndex = photoIndex;
+    upButtonElem.onclick = upPhoto;
+  }
+
+  const downButtonElem = elem.getElementsByClassName("photo_down_button")[0];
+  if (photoIndex === photosInThisPage["section" + section].length - 1) {
+    downButtonElem.remove();
+  } else {
+    downButtonElem.dataset.section = section;
+    downButtonElem.dataset.photoIndex = photoIndex;
+    downButtonElem.onclick = downPhoto;
+  }
+}
 
 // photosInThisPageはHTML側にサーバで展開される。
 // photosInThisPageの構造
@@ -92,22 +160,21 @@ function refreshSectionPhotos(section) {
     photoDiv.removeChild(photoDiv.firstChild);
   }
   const sectionPhotos = photosInThisPage["section" + section];
+  const onePhotoTemplateElem = document.getElementById("hidden-section-box")
+                                       .getElementsByClassName("one-photo")[0];
 
   console.log("refreshSectionPhotos pass3 len.." + sectionPhotos.length);
   for (let i = 0; i < sectionPhotos.length; i++) {
     console.log("refreshSectionPhotos pass4 i.." + i);
-    const imageElem = document.createElement("img");
-    imageElem.setAttribute("src", "./api/getimageadmin/" + sectionPhotos[i].id);
-    const pElem = document.createElement("p");
-    pElem.appendChild(imageElem);
-    const captionElem = document.createElement("textarea");
+    const newOnePhotoElem = onePhotoTemplateElem.cloneNode(true);
+    const imgElem = newOnePhotoElem.getElementsByClassName("photo")[0];
+    imgElem.setAttribute("src", "./api/getimageadmin/" + sectionPhotos[i].id);
+
+    const captionElem = newOnePhotoElem.getElementsByClassName("photo-caption")[0];
     captionElem.setAttribute("id", "photo-caption-" + sectionPhotos[i].id);
-    captionElem.setAttribute("class", "photo-caption");
-    const onePhotoDiv = document.createElement("div");
-    onePhotoDiv.setAttribute("class", "one-photo");
-    onePhotoDiv.appendChild(pElem);
-    onePhotoDiv.appendChild(captionElem);
-    photoDiv.appendChild(onePhotoDiv);
+    captionElem.value = sectionPhotos[i].caption;
+
+    photoDiv.appendChild(newOnePhotoElem);
   }
 }
 
@@ -126,6 +193,24 @@ function addSection() {
   fileInputButton.onchange = imageFileInputOnChange;
 
   sectionContainer.appendChild(cloneSectionDiv);
+}
+
+function deletePhoto(event) {
+  console.log(event);
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  photosInThisPage["section" + section].splice(photoIndex, 1);
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
+}
+
+function upPhoto(event) {
+  console.log(event);
+}
+
+function downPhoto(event) {
+  console.log(event);
 }
 
 function save() {

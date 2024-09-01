@@ -32,6 +32,24 @@ button:active {
   background-color: #ccaaaa;
 }
 
+button.photo-delete-button {
+  background-color: #ff0000;
+  border-width: 0px;
+  padding: 0px;
+}
+
+button.photo-up-button {
+  background-color: #ff0000;
+  border-width: 0px;
+  padding: 0px;
+}
+
+button.photo-down-button {
+  background-color: #ff0000;
+  border-width: 0px;
+  padding: 0px;
+}
+
 input[type="text"] {
   border: 1px solid #000000;
 }

@@ -48,7 +48,7 @@ class ImageDbAccessTest {
 
         int photoId = ImageDbAccess.getPhotoSequence(invoker);
         int ret = ImageDbAccess.insertPhoto(invoker, photoId, "kmaebashiblog",
-                                            1, "kmaebashiblog/20240224/P000000001.jpg", 5);
+                                            1, "kmaebashiblog/20240224/P000000001.jpg");
         assertEquals(1, ret);
 
         PhotoDto dto = ImageDbAccess.getPhotoAdmin(invoker, photoId, "kmaebashiblog");
