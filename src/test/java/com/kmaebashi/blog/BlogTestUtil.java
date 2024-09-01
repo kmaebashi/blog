@@ -12,5 +12,4 @@ public class BlogTestUtil {
                 "bloguser", "XXXXXX");
         return conn;
     }
-
 }

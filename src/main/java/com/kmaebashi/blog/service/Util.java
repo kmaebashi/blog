@@ -57,4 +57,7 @@ public class Util {
                 "<a href=\"$0\">$0</a>");
     }
 
+    public static boolean isNullOrEmpty(String str) {
+        return str == null || str.length() == 0;
+    }
 }

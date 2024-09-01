@@ -97,5 +97,12 @@ textarea.photo-caption {
 }
 
 div.one-photo {
+  display: flex;
+  flex-direction: row;
   margin: 0px auto 1em;
+}
+
+div.photo-button-area {
+  display: flex;
+  flex-direction: column;
 }

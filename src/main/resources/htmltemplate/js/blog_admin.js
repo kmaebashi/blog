@@ -18,8 +18,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
   publishButton.onclick = publish;
 });
 
-const photosInThisPage = {
-};
+// photosInThisPageはHTML側にサーバで展開される。
+// photosInThisPageの構造
+// {
+//   "section1": [
+//     {"id": <画像ID>},
+//     {"id": <画像ID>},
+//     {"id": <画像ID>}
+//   ],
+//   ...
+// }
 
 function imageFileInputOnChange(event) {
   console.log("imageFileInputOnChange pass1");
@@ -74,6 +82,7 @@ function addPhotos(section, newPhotoArray) {
 function refreshSectionPhotos(section) {
   console.log("refreshSectionPhotos pass1 section.." + section);
   if (!("section" + section) in photosInThisPage) {
+    console.log("ないはずはない");
     return;
   }
   console.log("refreshSectionPhotos pass2");

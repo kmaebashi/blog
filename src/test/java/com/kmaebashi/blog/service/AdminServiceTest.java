@@ -54,7 +54,7 @@ class AdminServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", Integer.valueOf(5));
+        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", Integer.valueOf(20));
         String html = dr.getDocument().html();
     }
 }

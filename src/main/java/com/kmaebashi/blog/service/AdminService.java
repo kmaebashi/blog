@@ -12,6 +12,10 @@ import com.kmaebashi.blog.dto.BlogPostDto;
 import com.kmaebashi.blog.dto.PhotoDto;
 import com.kmaebashi.blog.dto.BlogPostSectionDto;
 import com.kmaebashi.jsonparser.ClassMapper;
+import com.kmaebashi.jsonparser.JsonArray;
+import com.kmaebashi.jsonparser.JsonElement;
+import com.kmaebashi.jsonparser.JsonObject;
+import com.kmaebashi.jsonparser.JsonValue;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.InvokerOption;
@@ -24,7 +28,10 @@ import org.jsoup.nodes.Element;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AdminService {
     private AdminService() {}
@@ -42,6 +49,7 @@ public class AdminService {
             } else {
                 AdminService.renderExistingPost(context, doc, blogId, blogPostId.intValue());
             }
+
             return new DocumentResult(doc);
         });
     }
@@ -79,8 +87,11 @@ public class AdminService {
 
     private static void renderNewPost(Document doc) throws Exception {
         Element templateSectionElem = doc.getElementById("hidden-section-box");
+        templateSectionElem.remove();
         Element sectionContainerElem = doc.getElementById("section-container");
         Element newSectionElem = templateSectionElem.clone();
+        Element templatePhotoElem = newSectionElem.getElementsByClass("one-photo").first();
+        templatePhotoElem.remove();
         newSectionElem.removeAttr("style");
         newSectionElem.attr("id", "section-box1");
         Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
@@ -88,6 +99,8 @@ public class AdminService {
         sectionContainerElem.appendChild(newSectionElem);
         Element blogPostTitleElem = doc.getElementById("blog-post-title");
         blogPostTitleElem.attr("value", "");
+
+        setScript(doc, JsonArray.newInstance(new ArrayList<JsonElement>()));
     }
 
     private static void renderExistingPost(ServiceContext context, Document doc,
@@ -97,10 +110,13 @@ public class AdminService {
         blogPostTitleElem.attr("value", blogPostDto.title);
 
         Element templateSectionElem = doc.getElementById("hidden-section-box");
+        templateSectionElem.remove();
         Element sectionContainerElem = doc.getElementById("section-container");
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostId);
         int sectionNumber = 1;
+        Map<String, JsonElement> jsonSectionList = new HashMap<>();
+
         for (BlogPostSectionDto sectionDto : sectionList) {
             Element newSectionElem = templateSectionElem.clone();
             newSectionElem.removeAttr("style");
@@ -113,30 +129,36 @@ public class AdminService {
             Element photoAreaElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("photo-area"));
             List<PhotoDto> photoDtoList
                     = BlogPostDbAccess.getBlogPostPhoto(context.getDbAccessInvoker(), blogPostId, sectionNumber);
+            Element templatePhotoElem = newSectionElem.getElementsByClass("one-photo").first();
+            templatePhotoElem.remove();
+            List<JsonElement> jsonPhotoList = new ArrayList<>();
             for (PhotoDto photoDto : photoDtoList) {
-                Element divElem = doc.createElement("div");
-                divElem.attr("class", "one-photo");
-                Element pElem = doc.createElement("p");
-                Element imgElem = doc.createElement("img");
+                Element newPhotoElem = templatePhotoElem.clone();
+                Element imgElem = newPhotoElem.getElementsByClass("photo").first();
                 imgElem.attr("src", "./api/getimageadmin/" + photoDto.photoId);
-                pElem.appendChild(imgElem);
-                divElem.appendChild(pElem);
-
-                Element captionElem = doc.createElement("textarea");
+                Element captionElem = newPhotoElem.getElementsByClass("photo-caption").first();
                 captionElem.attr("id", "photo-caption-" + photoDto.photoId);
-                captionElem.attr("class", "photo-caption");
                 captionElem.text(photoDto.caption);
-                divElem.appendChild(captionElem);
 
-                photoAreaElem.appendChild(divElem);
+                photoAreaElem.appendChild(newPhotoElem);
+                Map<String, JsonElement> jsonPhotoMap = new HashMap<>();
+                jsonPhotoMap.put("id", JsonValue.createIntValue(photoDto.photoId));
+                jsonPhotoMap.put("caption", JsonValue.createStringValue(photoDto.caption));
+                jsonPhotoList.add(JsonObject.newInstance(jsonPhotoMap));
             }
             Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
             fileInputElem.attr("data-section", "" + sectionNumber);
             sectionContainerElem.appendChild(newSectionElem);
-
+            jsonSectionList.put("section"+ sectionNumber, JsonArray.newInstance(jsonPhotoList));
 
             sectionNumber++;
         }
+        setScript(doc, JsonObject.newInstance(jsonSectionList));
+    }
+
+    private static void setScript(Document doc, JsonElement json) {
+        Element scriptElem = doc.getElementById("server-side-include-script");
+        scriptElem.text("  photosInThisPage = " + json.stringify() + ";");
     }
 
     public static JsonResult postArticle(ServiceInvoker invoker, String userId, String blogId, ArticleData article) {

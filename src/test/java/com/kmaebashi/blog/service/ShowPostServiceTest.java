@@ -49,8 +49,8 @@ class ShowPostServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(5), "kmaebashi",
-                                                             "http://localhost:8080/blog/post/5");
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(20), "kmaebashi",
+                                                             "http://localhost:8080/blog/post/20");
         String html = dr.getDocument().html();
     }
 

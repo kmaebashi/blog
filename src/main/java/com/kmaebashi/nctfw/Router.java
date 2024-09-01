@@ -126,9 +126,7 @@ public abstract class Router {
                 out.write(ch);
             }
         }
-        System.out.println("processImageResult pass7:" + path);
         out.close();
-        System.out.println("processImageResult pass8:" + path);
     }
 
     public abstract RoutingResult doRouting(String path, ControllerInvoker invoker, HttpServletRequest request);

@@ -219,6 +219,13 @@ p.main-title {
   margin: 0.2em auto;
 }
 
+div.photo-container {
+  display: inline-block;
+  border: thin dotted #666666;
+  padding: 0.2em 0.5em;
+  margin: 0.2em auto;
+}
+
 p.photo {
   margin: 0.5em auto;
 }

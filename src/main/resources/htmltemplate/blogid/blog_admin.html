@@ -12,6 +12,7 @@
     <title id="blog-head-title">ロードバイク乗りのおっさんの日記 管理者画面</title>
   </head>
   <body>
+    <script id="server-side-include-script"></script>
     <header>
       <section>
         <p class="blog-title" id="blog-title">ロードバイク乗りのおっさんの日記 管理画面</p>
@@ -24,9 +25,23 @@
           <div id="hidden-section-box" class="section-box" style="display:none">
             <p class="section-title">セクション1</p>
             <div><textarea class="section-text"></textarea></div>
-            <div class="photo-area"></div>
+            <div class="photo-area">
+              <div class="one-photo">
+                <div>
+                  <p><img class="photo"></p>
+                  <textarea class="photo-caption"></textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img class="photo_delete_button" src="../img/photo_delete_button.png"></div>
+                  <div><img class="photo_up_button" src="../img/photo_up_button.png"></div>
+                  <div><img class="photo_down_button" src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
+            </div>
             <label for="input">画像をアップロード：</label>
             <input type="file" class="image-file-input" name="image-data" multiple="multiple">
+          </div>
+          <div id="hidden-photo-bo">
           </div>
           <div id="section-container">
             <div class="section-box">
@@ -37,8 +52,28 @@
 前回参加した時の内容はこちら。
 イベント自体は5/22の日曜ですが、出走が05:30ですし受付は前日なので、土曜のうちに移動します。名古屋駅で輪行袋に自転車を詰めてしなの７号で松本まで。</textarea>
               </div>
-              <p class="photo"><img src="../sample_image/photo1.jpg"></p>
-              <p class="photo"><img src="../sample_image/photo2.jpg"></p>
+              <div class="one-photo">
+                <div>
+                  <p class="photo"><img src="../sample_image/photo1.jpg"></p>
+                  <textarea class="photo-caption">名古屋駅で自転車を輪行袋に詰めます。</textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img src="../img/photo_delete_button.png"></div>
+                  <div><img src="../img/photo_up_button.png"></div>
+                  <div><img src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
+              <div class="one-photo">
+                <div>
+                  <p class="photo"><img src="../sample_image/photo2.jpg"></p>
+                  <textarea class="photo-caption">座席の後ろに輪行袋を押し込む。しなの7号だとぎりぎりでした。。</textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img src="../img/photo_delete_button.png"></div>
+                  <div><img src="../img/photo_up_button.png"></div>
+                  <div><img src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
               <p>画像をアップロード：</p>
               <input type="file" data-section="1"  class="image-file-input" name="image-data" multiple="multiple">
             </div>
@@ -47,9 +82,39 @@
               <div> 
                 <textarea class="section-text">以下、風景です。正直今回、写真ポイントにおける参加者のマナーが悪すぎて、あれに混じるのも嫌だなあ、と思ったのであまり撮っていません。白馬エイドで撮ればいいやと思っていたのに今回場所が違ってたしな。</textarea>
               </div>
-              <p class="photo"><img src="../sample_image/photo3.jpg"></p>
-              <p class="photo"><img src="../sample_image/photo4.jpg"></p>
-              <p class="photo"><img src="../sample_image/photo5.jpg"></p>
+              <div class="one-photo">
+                <div>
+                  <p class="photo"><img src="../sample_image/photo3.jpg"></p>
+                  <textarea class="photo-caption"></textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img src="../img/photo_delete_button.png"></div>
+                  <div><img src="../img/photo_up_button.png"></div>
+                  <div><img src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
+              <div class="one-photo">
+                <div>
+                  <p class="photo"><img src="../sample_image/photo4.jpg"></p>
+                  <textarea class="photo-caption"></textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img src="../img/photo_delete_button.png"></div>
+                  <div><img src="../img/photo_up_button.png"></div>
+                  <div><img src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
+              <div class="one-photo">
+                <div>
+                  <p class="photo"><img src="../sample_image/photo5.jpg"></p>
+                  <textarea class="photo-caption"></textarea>
+                </div>
+                <div class="photo-button-area">
+                  <div><img src="../img/photo_delete_button.png"></div>
+                  <div><img src="../img/photo_up_button.png"></div>
+                  <div><img src="../img/photo_down_button.png"></div>
+                </div>
+              </div>
               <p>画像をアップロード：</p>
               <input type="file" data-section="2"  class="image-file-input" name="image-data" multiple="multiple">
             </div>

@@ -245,11 +245,19 @@ public class ShowPostService {
         int sectionNumber = 1;
         String firstPhotoPath = null;
         for (BlogPostSectionDto sectionDto : sectionList) {
+            if (sectionNumber == 1) {
+                ShowPostService.setMetaProperty(doc, "og:description", Util.cutString(sectionDto.body, 60));
+            }
             appendParagraph(doc, postBodyElem, sectionDto.body);
             List<PhotoDto> photoList
                     = BlogPostDbAccess.getBlogPostPhoto(context.getDbAccessInvoker(),
                     blogPostDto.blogPostId, sectionNumber);
             for (PhotoDto photoDto : photoList) {
+                Element captionContainerElem = null;
+                if (!Util.isNullOrEmpty(photoDto.caption)) {
+                    captionContainerElem = doc.createElement("div");
+                    captionContainerElem.attr("class", "photo-container");
+                }
                 Element photoPElem = doc.createElement("p");
                 photoPElem.attr("class", "photo");
                 Element imgElem = doc.createElement("img");
@@ -259,8 +267,13 @@ public class ShowPostService {
                     firstPhotoPath = "api/getimage/" + photoDto.blogPostId + "/" + photoDto.photoId;
                 }
                 photoPElem.appendChild(imgElem);
-                postBodyElem.appendChild(photoPElem);
-                appendParagraph(doc, postBodyElem, photoDto.caption);
+                if (captionContainerElem != null) {
+                    captionContainerElem.appendChild(photoPElem);
+                    appendParagraph(doc, captionContainerElem, photoDto.caption);
+                    postBodyElem.appendChild(captionContainerElem);
+                } else {
+                    postBodyElem.appendChild(photoPElem);
+                }
             }
             sectionNumber++;
         }
