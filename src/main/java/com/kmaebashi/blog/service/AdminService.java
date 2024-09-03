@@ -184,6 +184,8 @@ public class AdminService {
             if (article.blogPostId != null) {
                 BlogPostDbAccess.deleteAllSections(context.getDbAccessInvoker(), blogPostId);
             }
+            BlogPostDbAccess.unlinkPhotoFromBlogPost(context.getDbAccessInvoker(),
+                                                     blogId, blogPostId);
             for (int secIdx = 0; secIdx < article.sectionArray.length; secIdx++) {
                 BlogPostDbAccess.insertSection(context.getDbAccessInvoker(), blogPostId, secIdx,
                                                 article.sectionArray[secIdx].body);

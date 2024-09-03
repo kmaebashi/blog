@@ -273,6 +273,29 @@ public class BlogPostDbAccess {
         });
     }
 
+    public static int unlinkPhotoFromBlogPost(DbAccessInvoker invoker, String blogId, int blogPostId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    UPDATE PHOTOS SET
+                      BLOG_POST_ID = NULL,
+                      UPDATED_AT = now()
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                      AND BLOG_POST_ID = :BLOG_POST_ID
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("BLOG_POST_ID", blogPostId);
+            npps.setParameters(params);
+
+            int result = npps.getPreparedStatement().executeUpdate();
+
+            return result;
+        });
+    }
+
     public static int linkPhotoToBlogPost(DbAccessInvoker invoker,
                                           int photoId, String blogId, int blogPostId, int displayOrder,
                                           String caption) {

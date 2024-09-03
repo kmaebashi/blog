@@ -196,7 +196,6 @@ function addSection() {
 }
 
 function deletePhoto(event) {
-  console.log(event);
   const section = parseInt(event.currentTarget.dataset.section);
   const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
 
@@ -206,11 +205,29 @@ function deletePhoto(event) {
 }
 
 function upPhoto(event) {
-  console.log(event);
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  const temp = photosInThisPage["section" + section][photoIndex - 1];
+  photosInThisPage["section" + section][photoIndex - 1]
+                = photosInThisPage["section" + section][photoIndex];
+  photosInThisPage["section" + section][photoIndex] = temp;
+
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
 }
 
 function downPhoto(event) {
-  console.log(event);
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  const temp = photosInThisPage["section" + section][photoIndex + 1];
+  photosInThisPage["section" + section][photoIndex + 1]
+                = photosInThisPage["section" + section][photoIndex];
+  photosInThisPage["section" + section][photoIndex] = temp;
+
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
 }
 
 function save() {
