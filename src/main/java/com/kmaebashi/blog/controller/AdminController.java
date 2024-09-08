@@ -34,7 +34,7 @@ public class AdminController {
                 try {
                     blogPostId = Integer.valueOf(Integer.parseInt(postIdStr));
                 } catch (NumberFormatException ex) {
-                    ;
+                    throw new BadRequestException("postidが不正です。");
                 }
             }
             context.getLogger().info("blogId.." + blogId);

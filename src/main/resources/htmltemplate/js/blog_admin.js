@@ -98,12 +98,10 @@ function setPhotoButtonHandler(elem) {
 // }
 
 function imageFileInputOnChange(event) {
-  console.log("imageFileInputOnChange pass1");
   const files = event.target.files;
   if (files.length == 0) {
     return;
   }
-  console.log("imageFileInputOnChange pass2 files.length.." + files.length);
   const section = event.target.dataset.section;
   const url = "./api/postimages";
   const formData = new FormData();
@@ -111,6 +109,9 @@ function imageFileInputOnChange(event) {
   for (let i = 0; i < files.length; i++) {
     formData.append("file" + i, files[i]);
   }
+  const uploadingDialog = document.getElementById("now-uploading-dialog");
+  uploadingDialog.showModal();
+  console.log("showModal()");
   let req = new Request(url, {
       body: formData,
       method: "POST",
@@ -118,16 +119,20 @@ function imageFileInputOnChange(event) {
     });
     fetch(req)
       .then((response) => {
-        console.log("imageFileInputOnChange pass3");
+        console.log("fetch pass1");
         return response.json()
       })
       .then((result) => {
-        console.log("imageFileInputOnChange pass4");
+        console.log("fetch pass2");
         addPhotos(section, result);
+        console.log("fetch pass3");
         refreshSectionPhotos(section);
+        console.log("fetch pass4");
+        uploadingDialog.close();
+        console.log("close()");
       })
       .catch((e) => {
-        console.warn
+        console.warn("画像のアップロードでエラー" + e.message);
       });
   event.target.value = "";
 }
@@ -135,20 +140,16 @@ function imageFileInputOnChange(event) {
 function addPhotos(section, newPhotoArray) {
   let sectionPhotos;
 
-  console.log("addPhotos pass1 len.." + newPhotoArray.length);
   if (("section" + section) in photosInThisPage) {
-    console.log("addPhotos pass2-1");
     sectionPhotos = photosInThisPage["section" + section];
   } else {
-    console.log("addPhotos pass2-2");
     sectionPhotos = [];
   }
-  console.log("addPhotos pass3");
   photosInThisPage["section" + section] = sectionPhotos.concat(newPhotoArray);
 }
 
 function refreshSectionPhotos(section) {
-  console.log("refreshSectionPhotos pass1 section.." + section);
+  console.log("refreshSectionPhotos pass1");
   if (!("section" + section) in photosInThisPage) {
     console.log("ないはずはない");
     return;
@@ -159,13 +160,13 @@ function refreshSectionPhotos(section) {
   while (photoDiv.firstChild) {
     photoDiv.removeChild(photoDiv.firstChild);
   }
+  console.log("refreshSectionPhotos pass3");
   const sectionPhotos = photosInThisPage["section" + section];
   const onePhotoTemplateElem = document.getElementById("hidden-section-box")
                                        .getElementsByClassName("one-photo")[0];
+  console.log("refreshSectionPhotos pass4");
 
-  console.log("refreshSectionPhotos pass3 len.." + sectionPhotos.length);
   for (let i = 0; i < sectionPhotos.length; i++) {
-    console.log("refreshSectionPhotos pass4 i.." + i);
     const newOnePhotoElem = onePhotoTemplateElem.cloneNode(true);
     const imgElem = newOnePhotoElem.getElementsByClassName("photo")[0];
     imgElem.setAttribute("src", "./api/getimageadmin/" + sectionPhotos[i].id);
@@ -176,6 +177,7 @@ function refreshSectionPhotos(section) {
 
     photoDiv.appendChild(newOnePhotoElem);
   }
+  console.log("refreshSectionPhotos pass5");
 }
 
 function addSection() {
@@ -186,6 +188,7 @@ function addSection() {
   const cloneSectionDiv = document.getElementById("hidden-section-box").cloneNode(true);
   cloneSectionDiv.setAttribute("id", "section-box" + sectionNumber);
   cloneSectionDiv.removeAttribute("style");
+  cloneSectionDiv.getElementsByClassName("one-photo")[0].remove();
   const sectionTitle = cloneSectionDiv.getElementsByClassName("section-title")[0];
   sectionTitle.innerText = "セクション" + sectionNumber;
   const fileInputButton = cloneSectionDiv.getElementsByClassName("image-file-input")[0];
@@ -272,7 +275,6 @@ function postArticle(publishFlag) {
   if (metaElem !== null) {
     csrfToken = metaElem.content;
   }
-  console.log("csrfToken.." + csrfToken);
   fetch("./api/postarticle", {
         method: "POST",
         headers: {

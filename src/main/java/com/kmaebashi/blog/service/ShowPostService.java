@@ -15,6 +15,7 @@ import com.kmaebashi.blog.dto.CommentDto;
 import com.kmaebashi.blog.dto.PhotoDto;
 import com.kmaebashi.blog.dto.ProfileDto;
 import com.kmaebashi.jsonparser.ClassMapper;
+import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.JsonResult;
 import com.kmaebashi.nctfw.NotFoundException;
@@ -72,6 +73,9 @@ public class ShowPostService {
     public static DocumentResult showPostsByBlogId(ServiceInvoker invoker, String blogId, int page) {
         return invoker.invoke((context) -> {
             BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
+            if (blogDto == null) {
+                throw new BadRequestException("ブログ" + blogId + "はありません。");
+            }
             List<BlogPostSummaryDto> blogPostSummaryDtoList
                     = BlogPostDbAccess.getBlogPostSummaryList(context.getDbAccessInvoker(), blogId,
                                                               null, null,

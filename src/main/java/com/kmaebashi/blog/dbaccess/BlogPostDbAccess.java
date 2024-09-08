@@ -510,7 +510,6 @@ public class BlogPostDbAccess {
             String sql = """
                     UPDATE BLOG_POSTS SET
                       TITLE = :TITLE,
-                      POSTED_DATE = :POSTED_DATE,
                       STATUS = :STATUS,
                       UPDATED_AT = now()
                     WHERE
@@ -521,7 +520,6 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("TITLE", title);
-            params.put("POSTED_DATE", postedDate);
             params.put("STATUS", status.intValue());
             params.put("BLOG_POST_ID", blogPostId);
             params.put("BLOG_ID", blogId);

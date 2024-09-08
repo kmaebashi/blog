@@ -87,7 +87,6 @@ public class AdminService {
 
     private static void renderNewPost(Document doc) throws Exception {
         Element templateSectionElem = doc.getElementById("hidden-section-box");
-        templateSectionElem.remove();
         Element sectionContainerElem = doc.getElementById("section-container");
         Element newSectionElem = templateSectionElem.clone();
         Element templatePhotoElem = newSectionElem.getElementsByClass("one-photo").first();
