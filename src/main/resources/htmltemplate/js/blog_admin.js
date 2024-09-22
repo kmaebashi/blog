@@ -221,8 +221,13 @@ function addSection() {
   const fileInputButton = cloneSectionDiv.getElementsByClassName("image-file-input")[0];
   fileInputButton.setAttribute("data-section", sectionNumber);
   fileInputButton.onchange = imageFileInputOnChange;
+  const deleteSectionButtonElem = cloneSectionDiv.getElementsByClassName("section-delete-button")[0]
+  deleteSectionButtonElem.dataset.section = sectionNumber;
+  deleteSectionButtonElem.onclick = deleteSection;
 
   sectionContainer.appendChild(cloneSectionDiv);
+
+  photosInThisPage["section" + sectionNumber] = [];
 }
 
 function deleteSection(event) {
@@ -246,6 +251,8 @@ function deleteSection(event) {
     const sectionBoxElem = document.getElementById("section-box" + i);
     sectionBoxElem.id = "section-box" + (i - 1);
     sectionBoxElem.dataset.section = (i - 1);
+    const sectionTitleElem = sectionBoxElem.getElementsByClassName("section-title")[0];
+    sectionTitleElem.innerText = "セクション" + (i - 1);
   }
 
   for (let i = 1; i <= beforeSectionCount - 1; i++) {

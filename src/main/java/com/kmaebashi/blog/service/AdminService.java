@@ -99,7 +99,9 @@ public class AdminService {
         Element blogPostTitleElem = doc.getElementById("blog-post-title");
         blogPostTitleElem.attr("value", "");
 
-        setScript(doc, JsonArray.newInstance(new ArrayList<JsonElement>()));
+        Map<String, JsonElement> jsonSectionList = new HashMap<>();
+        jsonSectionList.put("section1", JsonArray.newInstance(new ArrayList<JsonElement>()));
+        setScript(doc, JsonObject.newInstance(jsonSectionList));
     }
 
     private static void renderExistingPost(ServiceContext context, Document doc,
