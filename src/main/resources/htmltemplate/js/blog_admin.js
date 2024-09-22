@@ -28,6 +28,10 @@ function refreshSectionAttr(secElem, section) {
   secElem.id = "section-box" + section;
   secElem.dataset.section = section;
 
+  const deleteSectionButtonElem = secElem.getElementsByClassName("section-delete-button")[0]
+  deleteSectionButtonElem.dataset.section = section;
+  deleteSectionButtonElem.onclick = deleteSection;
+
   const photoElemList = secElem.getElementsByClassName("one-photo");
   for (let i = 0; i < photoElemList.length; i++) {
     photoElemList[i]
@@ -57,42 +61,13 @@ function refreshSectionAttr(secElem, section) {
   }
 }
 
-// elemはclassがsection-boxのdiv要素
-function setPhotoButtonHandler(elem) {
-  const section = parseInt(elem.dataset.section);
-  const photoIndex = parseInt(elem.dataset.photoIndex);
-
-  const deleteButtonElem = elem.getElementsByClassName("photo_delete_button")[0];
-  deleteButtonElem.dataset.section = section;
-  deleteButtonElem.dataset.photoIndex = photoIndex;
-  deleteButtonElem.onclick = deletePhoto;
-
-  const upButtonElem = elem.getElementsByClassName("photo_up_button")[0];
-  if (photoIndex === 0) {
-    upButtonElem.remove();
-  } else {
-    upButtonElem.dataset.section = section;
-    upButtonElem.dataset.photoIndex = photoIndex;
-    upButtonElem.onclick = upPhoto;
-  }
-
-  const downButtonElem = elem.getElementsByClassName("photo_down_button")[0];
-  if (photoIndex === photosInThisPage["section" + section].length - 1) {
-    downButtonElem.remove();
-  } else {
-    downButtonElem.dataset.section = section;
-    downButtonElem.dataset.photoIndex = photoIndex;
-    downButtonElem.onclick = downPhoto;
-  }
-}
-
 // photosInThisPageはHTML側にサーバで展開される。
 // photosInThisPageの構造
 // {
 //   "section1": [
-//     {"id": <画像ID>},
-//     {"id": <画像ID>},
-//     {"id": <画像ID>}
+//     {"id": <画像ID>, "caption": "キャプション"},
+//     {"id": <画像ID>, "caption": "キャプション"},
+//     {"id": <画像ID>, "caption": "キャプション"}
 //   ],
 //   ...
 // }
@@ -102,7 +77,7 @@ function imageFileInputOnChange(event) {
   if (files.length == 0) {
     return;
   }
-  const section = event.target.dataset.section;
+  const section = parseInt(event.target.dataset.section);
   const url = "./api/postimages";
   const formData = new FormData();
   formData.append("section", section);
@@ -128,6 +103,8 @@ function imageFileInputOnChange(event) {
         console.log("fetch pass3");
         refreshSectionPhotos(section);
         console.log("fetch pass4");
+        const sectionDiv = document.getElementById("section-box" + section);
+        refreshSectionAttr(sectionDiv, section);
         uploadingDialog.close();
         console.log("close()");
       })
@@ -180,6 +157,56 @@ function refreshSectionPhotos(section) {
   console.log("refreshSectionPhotos pass5");
 }
 
+function deletePhoto(event) {
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  saveCaptions(section);
+  photosInThisPage["section" + section].splice(photoIndex, 1);
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
+}
+
+function upPhoto(event) {
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  saveCaptions(section);
+  const temp = photosInThisPage["section" + section][photoIndex - 1];
+  photosInThisPage["section" + section][photoIndex - 1]
+                = photosInThisPage["section" + section][photoIndex];
+  photosInThisPage["section" + section][photoIndex] = temp;
+
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
+}
+
+function downPhoto(event) {
+  const section = parseInt(event.currentTarget.dataset.section);
+  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
+
+  saveCaptions(section);
+  const temp = photosInThisPage["section" + section][photoIndex + 1];
+  photosInThisPage["section" + section][photoIndex + 1]
+                = photosInThisPage["section" + section][photoIndex];
+  photosInThisPage["section" + section][photoIndex] = temp;
+
+  refreshSectionPhotos(section);
+  refreshSectionAttr(document.getElementById("section-box" + section), section);
+}
+
+function saveCaptions(section) {
+  const photoArray = photosInThisPage["section" + section];
+  const sectionElem = document.getElementById("section-box" + section);
+  const captionList = sectionElem.getElementsByClassName("photo-caption");
+  if (photoArray.length != captionList.length) {
+    alert("画像の配列が内部的に不整合を起こしています。");
+  }
+  for (let i = 0; i < photoArray.length; i++) {
+    photoArray[i].caption = captionList[i].value;
+  }
+}
+
 function addSection() {
   const sectionContainer = document.getElementById("section-container");
   const existingSections = sectionContainer.getElementsByClassName("section-box");
@@ -198,39 +225,34 @@ function addSection() {
   sectionContainer.appendChild(cloneSectionDiv);
 }
 
-function deletePhoto(event) {
+function deleteSection(event) {
   const section = parseInt(event.currentTarget.dataset.section);
-  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
 
-  photosInThisPage["section" + section].splice(photoIndex, 1);
-  refreshSectionPhotos(section);
-  refreshSectionAttr(document.getElementById("section-box" + section), section);
-}
+  const beforeSectionCount = Object.keys(photosInThisPage).length;
+  if (beforeSectionCount === 1) {
+    alert("ひとつしかないセクションは削除できません。");
+    return;
+  }
+  if (!confirm("セクションを削除します。よろしいですか?")) {
+    return;
+  }
+  const targetElem = document.getElementById("section-box" + section);
+  targetElem.remove();
+  delete photosInThisPage["section" + section];
+  for (let i = section + 1; i <= beforeSectionCount; i++) {
+    saveCaptions(i);
+    photosInThisPage["section" + (i - 1)] = photosInThisPage["section" + i];
+    delete photosInThisPage["section" + i];
+    const sectionBoxElem = document.getElementById("section-box" + i);
+    sectionBoxElem.id = "section-box" + (i - 1);
+    sectionBoxElem.dataset.section = (i - 1);
+  }
 
-function upPhoto(event) {
-  const section = parseInt(event.currentTarget.dataset.section);
-  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
-
-  const temp = photosInThisPage["section" + section][photoIndex - 1];
-  photosInThisPage["section" + section][photoIndex - 1]
-                = photosInThisPage["section" + section][photoIndex];
-  photosInThisPage["section" + section][photoIndex] = temp;
-
-  refreshSectionPhotos(section);
-  refreshSectionAttr(document.getElementById("section-box" + section), section);
-}
-
-function downPhoto(event) {
-  const section = parseInt(event.currentTarget.dataset.section);
-  const photoIndex = parseInt(event.currentTarget.dataset.photoIndex);
-
-  const temp = photosInThisPage["section" + section][photoIndex + 1];
-  photosInThisPage["section" + section][photoIndex + 1]
-                = photosInThisPage["section" + section][photoIndex];
-  photosInThisPage["section" + section][photoIndex] = temp;
-
-  refreshSectionPhotos(section);
-  refreshSectionAttr(document.getElementById("section-box" + section), section);
+  for (let i = 1; i <= beforeSectionCount - 1; i++) {
+    const sectionBoxElem = document.getElementById("section-box" + i);
+    refreshSectionPhotos(i);
+    refreshSectionAttr(sectionBoxElem, i);
+  }
 }
 
 function save() {

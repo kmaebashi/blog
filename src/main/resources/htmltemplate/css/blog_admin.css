@@ -32,6 +32,21 @@ button:active {
   background-color: #ccaaaa;
 }
 
+p.section-title {
+  text-align: left;
+  float: left;
+}
+
+p.section-delete-button-p {
+  text-align: right;
+}
+
+button.section-delete-button {
+  background-color: #ff0000;
+  border-width: 0px;
+  padding: 0px;
+}
+
 button.photo-delete-button {
   background-color: #ff0000;
   border-width: 0px;

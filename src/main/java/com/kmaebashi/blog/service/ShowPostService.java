@@ -358,14 +358,22 @@ public class ShowPostService {
     }
 
     private static void appendParagraph(Document doc, Element parent, String text) {
+
         String[] lines = text.replace("\\r", "").split("\\n");
+        boolean isFirst = true;
+        StringBuilder sb = new StringBuilder();
         for (String line : lines) {
-            Element pElem = doc.createElement("p");
+            if (!isFirst) {
+                sb.append("<br>");
+            }
+            isFirst = false;
             String escaped = Util.escapeHtml(line);
             String html = Util.createLinkAnchor(escaped);
-            pElem.html(html);
-            parent.appendChild(pElem);
+            sb.append(html);
         }
+        Element pElem = doc.createElement("p");
+        pElem.html(sb.toString());
+        parent.appendChild(pElem);
     }
 
     private static void renderOlderNewerLink(ServiceContext context, Document doc, String blogId, int blogPostId)

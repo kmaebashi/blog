@@ -191,7 +191,7 @@ public class AdminService {
                 int displayOrder = 1;
                 for (ArticlePhoto photo : article.sectionArray[secIdx].photos) {
                     BlogPostDbAccess.linkPhotoToBlogPost(context.getDbAccessInvoker(),
-                            photo.id, blogId, blogPostId, displayOrder, photo.caption);
+                            photo.id, blogId, blogPostId, secIdx + 1, displayOrder, photo.caption);
                     displayOrder++;
                 }
             }
