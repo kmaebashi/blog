@@ -22,12 +22,13 @@ public class SelectRoute {
     private static Pattern getImageAdminPattern = Pattern.compile("^(\\w+)/api/getimageadmin/(\\d+)$");
     private static Pattern postArticlePattern = Pattern.compile("^(\\w+)/api/postarticle$");
     private static Pattern postCommentPattern = Pattern.compile("^(\\w+)/api/postcomment$");
+    private static Pattern rssPattern = Pattern.compile("^(\\w+)/rss$");
 
     static Route select(String path, HashMap<String, Object> params) {
         try {
             Log.info("path.." + path);
             if (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
+                return Route.REDIRECT_REMOVE_SLASH;
             }
             if (path.equals("login")) {
                 return Route.LOGIN;
@@ -121,6 +122,12 @@ public class SelectRoute {
             }
             if (path.equals("api/dologin")) {
                 return Route.DO_LOGIN;
+            }
+            matcher = rssPattern.matcher(path);
+            if (matcher.matches()) {
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                return Route.RSS;
             }
         } catch (Exception ex) {
             throw new BadRequestException("クエリストリングが不正です。");

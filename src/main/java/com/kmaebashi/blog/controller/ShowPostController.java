@@ -13,7 +13,6 @@ import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.JsonResult;
 import com.kmaebashi.nctfw.RoutingResult;
-import com.kmaebashi.simplelogger.Logger;
 import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalDate;

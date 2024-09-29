@@ -13,6 +13,7 @@ import com.kmaebashi.blog.controller.BlogListController;
 import com.kmaebashi.blog.controller.ImageController;
 import com.kmaebashi.blog.controller.LoginController;
 import com.kmaebashi.blog.controller.AdminController;
+import com.kmaebashi.blog.controller.RssController;
 import com.kmaebashi.blog.controller.ShowPostController;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
@@ -72,7 +73,9 @@ public class BlogRouter extends Router {
         this.logger.info("route.." + route);
 
         if (request.getMethod().equals("GET")) {
-            if (route == Route.BLOG_TOP) {
+            if (route == Route.REDIRECT_REMOVE_SLASH) {
+                return new RedirectResult(request.getContextPath() + "/" + path.substring(0, path.length() - 1));
+            } else if (route == Route.BLOG_TOP) {
                 String blogId = (String) params.get("blog_id");
                 return ShowPostController.showPostsByBlogId(invoker, blogId);
             } else if (route == Route.POST_LIST_MONTHLY) {
@@ -115,6 +118,9 @@ public class BlogRouter extends Router {
                 } else {
                     result = BlogListController.showPage(invoker, currentUserId);
                 }
+            } else if (route == Route.RSS) {
+                String blogId = (String)params.get("blog_id");
+                result = RssController.getRss(invoker, blogId);
             } else if (route == Route.ADMIN) {
                 if (currentUserId == null) {
                     session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));

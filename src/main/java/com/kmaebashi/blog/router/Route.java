@@ -1,6 +1,7 @@
 package com.kmaebashi.blog.router;
 
 public enum Route {
+    REDIRECT_REMOVE_SLASH,
     BLOG_TOP,
     POST_LIST_MONTHLY,
     POST_LIST_DAILY,
@@ -17,5 +18,6 @@ public enum Route {
     GET_IMAGE_ADMIN,
     POST_ARTICLE,
     POST_COMMENT,
+    RSS,
     NO_ROUTE
 }

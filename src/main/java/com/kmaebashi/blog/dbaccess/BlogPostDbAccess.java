@@ -104,6 +104,38 @@ public class BlogPostDbAccess {
         });
     }
 
+    public static List<BlogPostSummaryDto> getBlogPostRssList(DbAccessInvoker invoker, String blogId,
+                                                              int limit) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      POST.BLOG_POST_ID,
+                      POST.TITLE,
+                      POST.POSTED_DATE,
+                      SEC.BODY AS SECTION_TEXT
+                    FROM BLOG_POSTS POST
+                    LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
+                      ON POST.BLOG_POST_ID = SEC.BLOG_POST_ID
+                    WHERE
+                      POST.BLOG_ID = :BLOG_ID
+                      AND SEC.SECTION_SEQ = 0
+                      AND POST.STATUS = 2
+                    ORDER BY POST.POSTED_DATE DESC
+                    OFFSET 0
+                    LIMIT :LIMIT
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("LIMIT", limit);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<BlogPostSummaryDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostSummaryDto.class);
+            return dtoList;
+        });
+    }
+
     public static int getBlogPostCountByBlogId(DbAccessInvoker invoker, String blogId, LocalDate startDate, LocalDate endDate) {
         return invoker.invoke((context) -> {
             String sql1 = """

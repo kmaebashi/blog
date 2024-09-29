@@ -181,6 +181,9 @@ public class ShowPostService {
         Element blogDescriptionAreaElem = doc.getElementById("blog-description-area");
         Element descriptionElem = blogDescriptionAreaElem.getElementsByClass("description").first();
         descriptionElem.html(Util.escapeHtml2(blogDto.description));
+
+        Element rssAElem = doc.getElementById("rss-url");
+        rssAElem.attr("href", topUrl + "/rss");
     }
 
     private static void renderProfile(Document doc, String blogId, BlogProfileDto blogDto, PathLevel pathLevel) {
@@ -313,7 +316,7 @@ public class ShowPostService {
                 Element imgElem = photoPElem.getElementsByTag("img").first();
                 imgElem.attr("src", getBlogRoot(blogId, pathLevel) + "api/getimage/" + postDto.blogPostId + "/" + postDto.photoId);
             }
-            appendParagraph(doc, postBodyElem, Util.cutString(postDto.sectionText, Constants.POST_LIST_TEXT_LENGTH));
+            appendSummary(doc, postBodyElem, Util.cutString(postDto.sectionText, Constants.POST_LIST_TEXT_LENGTH));
             containerMainElem.appendChild(oneBlogPostElem);
         }
     }
@@ -341,6 +344,15 @@ public class ShowPostService {
             }
             elem.attr("src", newLink);
         }
+        Element rssIconElem = doc.getElementById("rss-icon");
+        String oldSrc = rssIconElem.attr("src");
+        String newSrc;
+        if (isTop) {
+            newSrc = oldSrc.replaceFirst("^\\.\\./\\.\\./", "");
+        } else {
+            newSrc = oldSrc.replaceFirst("^\\.\\./", "");
+        }
+        rssIconElem.attr("src", newSrc);
     }
 
     private static String getBlogRoot(String blogId, PathLevel pathLevel) {
@@ -373,6 +385,13 @@ public class ShowPostService {
         }
         Element pElem = doc.createElement("p");
         pElem.html(sb.toString());
+        parent.appendChild(pElem);
+    }
+
+    private static void appendSummary(Document doc, Element parent, String text) {
+        String str = text.replace("\\r", "").replace("\\n", " ");
+        Element pElem = doc.createElement("p");
+        pElem.text(str.toString());
         parent.appendChild(pElem);
     }
 
