@@ -70,6 +70,11 @@ header section a.blog-title {
     margin: 10px 0px;
     justify-content: flex-end;
   }
+
+  #container-sidebar {
+    background-color: #d5e0f1;
+    width: 220px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -82,12 +87,17 @@ header section a.blog-title {
     background-color: #d5e0f1;
     margin: 10px 0px;
   }
+
+  #container-sidebar {
+    background-color: #d5e0f1;
+    width: 100%;
+  }
+
+  p.photo img {
+    max-width: 100%;
+  }
 }
 
-#container-sidebar {
-  background-color: #d5e0f1;
-  width: 220px;
-}
 
 p.sidebar-title {
   margin: 0.2em auto;
