@@ -39,6 +39,7 @@ public class BlogDbAccess {
             String sql = """
                     SELECT
                       BLOGS.BLOG_ID,
+                      BLOGS.OWNER_USER,
                       BLOGS.TITLE,
                       BLOGS.DESCRIPTION,
                       PROFILES.NICKNAME,

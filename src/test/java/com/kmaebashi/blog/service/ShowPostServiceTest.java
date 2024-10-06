@@ -3,10 +3,12 @@ package com.kmaebashi.blog.service;
 import com.kmaebashi.blog.BlogTestUtil;
 import com.kmaebashi.blog.controller.data.CommentData;
 import com.kmaebashi.blog.controller.data.PostCommentStatus;
+import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
 import com.kmaebashi.nctfw.JsonResult;
+import com.kmaebashi.nctfw.NotFoundException;
 import com.kmaebashi.nctfw.ServiceContext;
 import com.kmaebashi.nctfw.ServiceInvoker;
 import com.kmaebashi.nctfwimpl.DbAccessContextImpl;
@@ -49,9 +51,73 @@ class ShowPostServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(20), "kmaebashi",
-                                                             "http://localhost:8080/blog/post/20");
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(28), "kmaebashi",
+                                                             "http://localhost:8080/blog/post/28", false);
         String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPostByPostIdTest002() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(27), "kmaebashi",
+                "http://localhost:8080/blog/post/27", false);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPostByPostIdTest003() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        try {
+            DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(30), "kmaebashi",
+                    "http://localhost:8080/blog/post/30", false);
+            String html = dr.getDocument().html();
+        } catch (Exception ex) {
+            assertTrue(ex instanceof NotFoundException);
+            return;
+        }
+        fail();
+    }
+
+    @Test
+    void showPostByPostIdTest004() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(30), "kmaebashi",
+                "http://localhost:8080/blog/post/30", true);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPostByPostIdTest005() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        try {
+            DocumentResult dr = ShowPostService.showPostByPostId(si, "kmaebashiblog", Integer.valueOf(30), "kmaebashi2",
+                    "http://localhost:8080/blog/post/30", true);
+            String html = dr.getDocument().html();
+        } catch (Exception ex) {
+            assertTrue(ex instanceof BadRequestException);
+            return;
+        }
+        fail();
     }
 
     @Test

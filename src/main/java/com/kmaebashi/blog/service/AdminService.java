@@ -25,6 +25,7 @@ import com.kmaebashi.nctfw.ServiceInvoker;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -36,10 +37,14 @@ import java.util.Map;
 public class AdminService {
     private AdminService() {}
 
-    public static DocumentResult showPage(ServiceInvoker invoker, String blogId, Integer blogPostId) {
+    public static DocumentResult showPage(ServiceInvoker invoker, String blogId, Integer blogPostId,
+                                          String currentUserId) {
         return invoker.invoke((context) -> {
             context.getLogger().info("shoePage called. blogId.." + blogId + " blogPostId.." + blogPostId);
             BlogDto blogDto = BlogDbAccess.getBlog(context.getDbAccessInvoker(), blogId);
+            if (!blogDto.ownerUser.equals(currentUserId)) {
+                throw new BadRequestException("ブログの所有者ではありません。");
+            }
             List<BlogPostDto> blogPostList = BlogPostDbAccess.getBlogPostForAdmin(context.getDbAccessInvoker(), blogId);
 
             Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/blog_admin.html");
@@ -65,16 +70,21 @@ public class AdminService {
 
         Element sidebarRecentArticles = doc.getElementById("sidebar-recent-articles");
         Element[] items = sidebarRecentArticles.getElementsByTag("li").toArray(new Element[0]);
+        Element orgLi = items[0];
         for (int i = 0; i < items.length; i++) {
             items[i].remove();
         }
         for (BlogPostDto blogPostDto : blogPostList) {
-            Element aElem = doc.createElement("a");
-            aElem.attr("href", "/blog/" + blogId + "/admin?postid=" + blogPostDto.blogPostId);
-            aElem.text(blogPostDto.title);
-            Element liElem = doc.createElement("li");
-            liElem.appendChild(aElem);
-            sidebarRecentArticles.appendChild(liElem);
+            Element cloneLiElem = orgLi.clone();
+            Elements aElems = cloneLiElem.getElementsByTag("a");
+            Element adminLinkElem = aElems.get(0);
+            adminLinkElem.attr("href", "./admin?postid=" + blogPostDto.blogPostId);
+            adminLinkElem.text(blogPostDto.title);
+            Element linkIconElem = aElems.get(1);
+            linkIconElem.attr("href", "./previewpost/" + blogPostDto.blogPostId);
+            linkIconElem.attr("target", "_blank");
+
+            sidebarRecentArticles.appendChild(cloneLiElem);
         }
         Element sectionContainerElem = doc.getElementById("section-container");
         Element[] sections = sectionContainerElem.getElementsByClass("section-box").toArray(new Element[0]);

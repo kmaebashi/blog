@@ -45,6 +45,7 @@ public class LoginController {
                 session.setAttribute(SessionKey.CURRENT_USER_ID, request.getParameter("userid").trim());
                 session.setAttribute(SessionKey.CSRF_TOKEN, RandomIdGenerator.getRandomId());
                 returnUrl = (String)session.getAttribute(SessionKey.RETURN_URL);
+                session.removeAttribute(SessionKey.RETURN_URL);
                 if (returnUrl == null) {
                     return new RedirectResult(request.getContextPath() + "/blog_list");
                 } else {

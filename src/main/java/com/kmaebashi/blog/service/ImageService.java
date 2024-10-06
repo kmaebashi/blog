@@ -109,10 +109,10 @@ public class ImageService {
     }
 
     public static ImageFileResult getImage(ServiceInvoker invoker, int photoId, String blogId, int blogPostId,
-                                                Path resizedImageRoot) {
+                                           Path imageRoot) {
         return invoker.invoke((context) -> {
             PhotoDto dto = ImageDbAccess.getPhoto(context.getDbAccessInvoker(), photoId, blogId, blogPostId);
-            Path photoPath = resizedImageRoot.resolve(dto.path);
+            Path photoPath = imageRoot.resolve(dto.path);
 
             return new ImageFileResult(photoPath);
         });

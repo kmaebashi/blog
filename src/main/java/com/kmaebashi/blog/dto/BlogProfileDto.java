@@ -6,6 +6,9 @@ public class BlogProfileDto {
     @TableColumn("BLOG_ID")
     public String blogId;
 
+    @TableColumn("OWNER_USER")
+    public String ownerUser;
+
     @TableColumn("TITLE")
     public String title;
 

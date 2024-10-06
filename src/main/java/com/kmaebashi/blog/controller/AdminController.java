@@ -25,7 +25,8 @@ import java.util.Map;
 public class AdminController {
     private AdminController() {}
 
-    public static RoutingResult showPage(ControllerInvoker invoker, Map<String, Object> params) {
+    public static RoutingResult showPage(ControllerInvoker invoker, Map<String, Object> params,
+                                         String currentUserId) {
         return invoker.invoke((context) -> {
             String blogId = (String)params.get("blog_id");
             Integer blogPostId = null;
@@ -40,7 +41,7 @@ public class AdminController {
             context.getLogger().info("blogId.." + blogId);
             context.getLogger().info("blogPostId.." + blogPostId);
             DocumentResult result
-                    = AdminService.showPage(context.getServiceInvoker(), blogId, blogPostId);
+                    = AdminService.showPage(context.getServiceInvoker(), blogId, blogPostId, currentUserId);
 
             HttpSession session = context.getServletRequest().getSession(false);
             if (session != null) {

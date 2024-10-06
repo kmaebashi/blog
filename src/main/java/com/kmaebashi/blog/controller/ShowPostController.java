@@ -101,7 +101,7 @@ public class ShowPostController {
     }
 
     public static RoutingResult showPostByPostId(ControllerInvoker invoker, String blogId, int blogPostId,
-                                                 String currentUserId) {
+                                                 String currentUserId, boolean isPreview) {
         return invoker.invoke((context) -> {
             String url = context.getServletRequest().getRequestURL().toString();
             context.getLogger().info("url.." + url);
@@ -109,7 +109,7 @@ public class ShowPostController {
             context.getLogger().info("url2.." + url);
             DocumentResult result
                     = ShowPostService.showPostByPostId(context.getServiceInvoker(),
-                                                       blogId, blogPostId, currentUserId, url);
+                                                       blogId, blogPostId, currentUserId, url, isPreview);
 
             HttpSession session = context.getServletRequest().getSession(false);
             if (session != null) {

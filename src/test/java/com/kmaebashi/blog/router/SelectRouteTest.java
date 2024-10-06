@@ -27,8 +27,7 @@ class SelectRouteTest {
     void selectTest002() throws Exception {
         HashMap<String, Object> params = new HashMap<>();
         Route route = SelectRoute.select("kmaebashi/", params);
-        assertEquals(Route.BLOG_TOP, route);
-        assertEquals("kmaebashi", params.get("blog_id"));
+        assertEquals(Route.REDIRECT_REMOVE_SLASH, route);
     }
 
     @Test

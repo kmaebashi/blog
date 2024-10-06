@@ -66,6 +66,9 @@ public abstract class Router {
         } catch (BadRequestException ex) {
             this.getLogger().info(ex.getMessage());
             showErrorPage(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), response);
+        } catch (NotFoundException ex) {
+            this.getLogger().info(ex.getMessage());
+            showErrorPage(HttpServletResponse.SC_NOT_FOUND, ex.getMessage(), response);
         } catch (Exception ex) {
             this.getLogger().error("内部エラー。" + ex.toString());
             ex.printStackTrace();

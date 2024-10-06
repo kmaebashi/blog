@@ -3,6 +3,7 @@ package com.kmaebashi.nctfwimpl;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.InternalException;
 import com.kmaebashi.nctfw.InvokerOption;
+import com.kmaebashi.nctfw.NotFoundException;
 import com.kmaebashi.nctfw.ServiceContext;
 import com.kmaebashi.nctfw.ServiceInvoker;
 import com.kmaebashi.nctfw.ThrowableFunction;
@@ -35,6 +36,9 @@ public class ServiceInvokerImpl implements ServiceInvoker {
                     if (ex instanceof BadRequestException ex2) {
                         logger.info("Service ex2.." + ex2);
                         throw ex2;
+                    } if (ex instanceof NotFoundException ex2) {
+                        logger.info("Service ex2.." + ex2);
+                        throw ex2;
                     } else {
                         throw new InternalException("Serviceでエラーが発生しました。", ex);
                     }
@@ -45,7 +49,7 @@ public class ServiceInvokerImpl implements ServiceInvoker {
         } else {
             try {
                 ret = doLogic(logic, logger);
-            } catch (BadRequestException ex) {
+            } catch (BadRequestException | NotFoundException ex) {
                 throw ex;
             } catch (Exception ex) {
                 logger.error("Serviceでエラーが発生しました。\n" + ex.toString());

@@ -1,4 +1,5 @@
 package com.kmaebashi.blog.service;
+import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfw.DocumentResult;
@@ -42,7 +43,7 @@ class AdminServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", null);
+        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", null, "kmaebashi");
         String html = dr.getDocument().html();
     }
 
@@ -54,7 +55,25 @@ class AdminServiceTest {
                 Paths.get("./src/main/resources/htmltemplate"),
                 logger);
         ServiceInvoker si = new ServiceInvokerImpl(sc);
-        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", Integer.valueOf(20));
+        DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", Integer.valueOf(20), "kmaebashi");
         String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showPageTest003() throws Exception {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        try {
+            DocumentResult dr = AdminService.showPage(si, "kmaebashiblog", null, "kmaebashi2");
+            String html = dr.getDocument().html();
+        } catch (Exception ex) {
+            assertTrue(ex instanceof BadRequestException);
+            return;
+        }
+        fail();
     }
 }

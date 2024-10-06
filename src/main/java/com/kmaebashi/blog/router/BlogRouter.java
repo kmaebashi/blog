@@ -91,17 +91,25 @@ public class BlogRouter extends Router {
             } else if (route == Route.SHOW_POST) {
                 String blogId = (String) params.get("blog_id");
                 int blogPostId = (int) params.get("blog_post_id");
-                return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId);
-            } else if (route == Route.GET_IMAGE) {
+                return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId, false);
+
+            } else if (route == Route.PREVIEW_POST) {
+                if (currentUserId == null) {
+                    return redirectToLoginPage(request, path);
+                } else {
+                    String blogId = (String) params.get("blog_id");
+                    int blogPostId = (int) params.get("blog_post_id");
+                    return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId, true);
+                }
+
+            } else if (route == Route.GET_IMAGE || route == Route.GET_ORIGINAL_SIZE_IMAGE) {
                 int photoId = (int)params.get("photo_id");
                 String blogId = (String)params.get("blog_id");
                 int blogPostId = (int)params.get("blog_post_id");
-
-                return ImageController.getImage(invoker, photoId, blogId, blogPostId, this.resizedImageRoot);
-
+                Path imageRoot = (route == Route.GET_IMAGE) ? this.resizedImageRoot : this.originalImageRoot;
+                return ImageController.getImage(invoker, photoId, blogId, blogPostId, imageRoot);
             } else if (route == Route.GET_PROFILE_IMAGE) {
                 String blogId = (String)params.get("blog_id");
-
                 return ImageController.getProfileImage(invoker, blogId, this.resizedProfileImageRoot);
             } else if (route == Route.LOGIN) {
                 result = LoginController.showPage(invoker, path);
@@ -123,12 +131,9 @@ public class BlogRouter extends Router {
                 result = RssController.getRss(invoker, blogId);
             } else if (route == Route.ADMIN) {
                 if (currentUserId == null) {
-                    session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
-                    String loginPath = request.getContextPath() + "/login";
-                    this.logger.info("loginPath.." + loginPath);
-                    return new RedirectResult(loginPath);
+                    return redirectToLoginPage(request, path);
                 } else {
-                    result = AdminController.showPage(invoker, params);
+                    result = AdminController.showPage(invoker, params, currentUserId);
                 }
             } else if (route == Route.GET_IMAGE_ADMIN && currentUserId != null) {
                 int photoId = (int)params.get("photo_id");
@@ -162,6 +167,14 @@ public class BlogRouter extends Router {
             returnUrl = path + "?" + request.getQueryString();
         }
         return returnUrl;
+    }
+
+    private RedirectResult redirectToLoginPage(HttpServletRequest request, String path) {
+        HttpSession session = request.getSession();
+        session.setAttribute(SessionKey.RETURN_URL, createReturnPath(request, path));
+        String loginPath = request.getContextPath() + "/login";
+        this.logger.info("loginPath.." + loginPath);
+        return new RedirectResult(loginPath);
     }
 
     @Override

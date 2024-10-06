@@ -49,9 +49,9 @@ public class ImageController {
     }
 
     public static RoutingResult getImage(ControllerInvoker invoker, int photoId, String blogId, int blogPostId,
-                                              Path resizedImageRoot) {
+                                              Path imageRoot) {
         return invoker.invoke((context) -> {
-            return ImageService.getImage(context.getServiceInvoker(), photoId, blogId, blogPostId, resizedImageRoot);
+            return ImageService.getImage(context.getServiceInvoker(), photoId, blogId, blogPostId, imageRoot);
         });
     }
 

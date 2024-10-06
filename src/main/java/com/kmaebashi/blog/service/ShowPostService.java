@@ -44,14 +44,18 @@ public class ShowPostService {
     }
 
     public static DocumentResult showPostByPostId(ServiceInvoker invoker, String blogId, int blogPostId,
-                                                  String currentUserId, String url) {
+                                                  String currentUserId, String url, boolean isPreview) {
         return invoker.invoke((context) -> {
             BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
             BlogPostDto blogPostDto
                     = BlogPostDbAccess.getBlogPost(context.getDbAccessInvoker(), blogId, blogPostId);
             if (blogDto == null || blogPostDto == null
-                    || blogPostDto.status != BlogPostStatus.PUBLISHED.intValue()) {
+                    || (!isPreview &&
+                        blogPostDto.status != BlogPostStatus.PUBLISHED.intValue())) {
                 throw new NotFoundException("ブログ記事がありません");
+            }
+            if (isPreview && !blogDto.ownerUser.equals(currentUserId)) {
+                throw new BadRequestException("ブログの所有者ではありません。");
             }
             Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/post/post.html");
             Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
@@ -262,22 +266,29 @@ public class ShowPostService {
             for (PhotoDto photoDto : photoList) {
                 Element captionContainerElem = null;
                 if (!Util.isNullOrEmpty(photoDto.caption)) {
+                    Element captionContainerBlockElem = doc.createElement("div");
                     captionContainerElem = doc.createElement("div");
+                    captionContainerBlockElem.appendChild(captionContainerElem);
                     captionContainerElem.attr("class", "photo-container");
+                    postBodyElem.appendChild(captionContainerBlockElem);
                 }
                 Element photoPElem = doc.createElement("p");
                 photoPElem.attr("class", "photo");
                 Element imgElem = doc.createElement("img");
-                imgElem.attr("src",  getBlogRoot(blogId, PathLevel.POST) + "api/getimage/"
-                        + photoDto.blogPostId + "/" + photoDto.photoId);
+                String photoPath = "api/getimage/" + photoDto.blogPostId + "/" + photoDto.photoId;
+                imgElem.attr("src",  getBlogRoot(blogId, PathLevel.POST) + photoPath);
                 if (firstPhotoPath == null) {
-                    firstPhotoPath = "api/getimage/" + photoDto.blogPostId + "/" + photoDto.photoId;
+                    firstPhotoPath = photoPath;
                 }
-                photoPElem.appendChild(imgElem);
+                Element orgSizeAElem = doc.createElement("a");
+                orgSizeAElem.appendChild(imgElem);
+                orgSizeAElem.attr("href", getBlogRoot(blogId, PathLevel.POST) + "api/getorgsizeimage/"
+                                          + photoDto.blogPostId + "/" + photoDto.photoId);
+                orgSizeAElem.attr("target", "_blank");
+                photoPElem.appendChild(orgSizeAElem);
                 if (captionContainerElem != null) {
                     captionContainerElem.appendChild(photoPElem);
                     appendParagraph(doc, captionContainerElem, photoDto.caption);
-                    postBodyElem.appendChild(captionContainerElem);
                 } else {
                     postBodyElem.appendChild(photoPElem);
                 }

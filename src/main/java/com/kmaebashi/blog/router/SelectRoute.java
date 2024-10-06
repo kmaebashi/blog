@@ -14,7 +14,9 @@ public class SelectRoute {
     private static Pattern monthlyPattern = Pattern.compile("^(\\w+)/(\\d\\d\\d\\d\\d\\d)$");
     private static Pattern dailyPattern = Pattern.compile("^(\\w+)/(\\d\\d\\d\\d\\d\\d\\d\\d)$");
     private static Pattern postPattern = Pattern.compile("^(\\w+)/post/(\\d+)$");
+    private static Pattern previewPostPattern = Pattern.compile("^(\\w+)/previewpost/(\\d+)$");
     private static Pattern getImagePattern = Pattern.compile("^(\\w+)/api/getimage/(\\d+)/(\\d+)$");
+    private static Pattern getOriginalSizeImagePattern = Pattern.compile("^(\\w+)/api/getorgsizeimage/(\\d+)/(\\d+)$");
     private static Pattern getProfileImagePattern = Pattern.compile("^(\\w+)/api/getprofileimage$");
     private static Pattern adminPattern = Pattern.compile("^(\\w+)/admin$");
     private static Pattern getPostCountEachDayPattern = Pattern.compile("^(\\w+)/api/getpostcounteachday$");
@@ -61,7 +63,14 @@ public class SelectRoute {
                 params.put("blog_post_id", postId);
                 return Route.SHOW_POST;
             }
-            matcher = getImagePattern.matcher(path);
+            matcher = previewPostPattern.matcher(path);
+            if (matcher.matches()) {
+                params.put("blog_id", matcher.group(1));
+                String postIdStr = matcher.group(2);
+                int postId = Integer.parseInt(postIdStr);
+                params.put("blog_post_id", postId);
+                return Route.PREVIEW_POST;
+            }            matcher = getImagePattern.matcher(path);
             if (matcher.matches()) {
                 String blogId = matcher.group(1);
                 params.put("blog_id", blogId);
@@ -72,6 +81,18 @@ public class SelectRoute {
                 int photoId = Integer.parseInt(photoIdStr);
                 params.put("photo_id", photoId);
                 return Route.GET_IMAGE;
+            }
+            matcher = getOriginalSizeImagePattern.matcher(path);
+            if (matcher.matches()) {
+                String blogId = matcher.group(1);
+                params.put("blog_id", blogId);
+                String blogPostIdStr = matcher.group(2);
+                int blogPostId = Integer.parseInt(blogPostIdStr);
+                params.put("blog_post_id", blogPostId);
+                String photoIdStr = matcher.group(3);
+                int photoId = Integer.parseInt(photoIdStr);
+                params.put("photo_id", photoId);
+                return Route.GET_ORIGINAL_SIZE_IMAGE;
             }
             matcher = getProfileImagePattern.matcher(path);
             if (matcher.matches()) {
