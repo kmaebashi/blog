@@ -70,7 +70,8 @@ public class SelectRoute {
                 int postId = Integer.parseInt(postIdStr);
                 params.put("blog_post_id", postId);
                 return Route.PREVIEW_POST;
-            }            matcher = getImagePattern.matcher(path);
+            }
+            matcher = getImagePattern.matcher(path);
             if (matcher.matches()) {
                 String blogId = matcher.group(1);
                 params.put("blog_id", blogId);

@@ -13,9 +13,7 @@ public class StaticResourceFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest)request;
         String path = req.getRequestURI().substring(req.getContextPath().length());
-        if (path.length() == 0 || path.equals("/")) {
-            request.getRequestDispatcher("/index.html").forward(request, response);
-        } else if (path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".jpg") || path.endsWith(".png")) {
+        if (path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".jpg") || path.endsWith(".png")) {
             chain.doFilter(request, response);
         } else {
             request.getRequestDispatcher(path + ".do").forward(request, response);

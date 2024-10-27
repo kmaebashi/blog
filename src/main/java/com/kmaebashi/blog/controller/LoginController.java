@@ -41,6 +41,7 @@ public class LoginController {
                                            request.getParameter("password"));
             if (result == null) {
                 String returnUrl = null;
+                request.changeSessionId();
                 HttpSession session = request.getSession(true);
                 session.setAttribute(SessionKey.CURRENT_USER_ID, request.getParameter("userid").trim());
                 session.setAttribute(SessionKey.CSRF_TOKEN, RandomIdGenerator.getRandomId());
