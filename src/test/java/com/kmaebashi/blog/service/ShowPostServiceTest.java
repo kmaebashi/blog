@@ -2,7 +2,6 @@ package com.kmaebashi.blog.service;
 
 import com.kmaebashi.blog.BlogTestUtil;
 import com.kmaebashi.blog.controller.data.CommentData;
-import com.kmaebashi.blog.controller.data.PostCommentStatus;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;

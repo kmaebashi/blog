@@ -39,29 +39,47 @@ public class FileLogger implements Logger {
     }
 
     public synchronized void debug(String message) {
-        write(LogLevel.DEBUG, message);
+        debug(message, 1);
     }
     public synchronized void info(String message) {
-        write(LogLevel.INFO, message);
+        info(message, 1);
     }
     public synchronized void warn(String message) {
-        write(LogLevel.WARN, message);
+        warn(message, 1);
     }
     public synchronized void error(String message) {
-        write(LogLevel.ERROR, message);
+        error(message, 1);
     }
     public synchronized void fatal(String message) {
-        write(LogLevel.FATAL, message);
+        fatal(message, 1);
+    }
+
+    public synchronized void debug(String message, int callDepth) {
+        write(LogLevel.DEBUG, message, callDepth);
+    }
+    public synchronized void info(String message, int callDepth) {
+        write(LogLevel.INFO, message, callDepth);
+    }
+    public synchronized void warn(String message, int callDepth) {
+        write(LogLevel.WARN, message, callDepth);
+    }
+    public synchronized void error(String message, int callDepth) {
+        write(LogLevel.ERROR, message, callDepth);
+    }
+    public synchronized void fatal(String message, int callDepth) {
+        write(LogLevel.FATAL, message, callDepth);
     }
     public synchronized void setLogLevel(LogLevel logLevel) {
         this.currentLogLevel = logLevel;
     }
 
-    private void write(LogLevel level, String message) {
+    private void write(LogLevel level, String message, int callDepth) {
+        final int DEFAULT_CALL_DEPTH = 3;
         if (level.compareTo(this.currentLogLevel) < 0) {
             return;
         }
         try {
+            int addedCallDepth = DEFAULT_CALL_DEPTH + callDepth;
             logRotate();
             LocalDateTime now = LocalDateTime.now();
             this.writer.append(now.format(this.dateTimeFormatter) + ",");
@@ -71,13 +89,13 @@ public class FileLogger implements Logger {
             this.writer.append("" + Thread.currentThread().getId() + ",");
 
             StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-            this.writer.append(ste[3].getClassName() + ".");
-            this.writer.append(ste[3].getMethodName());
+            this.writer.append(ste[addedCallDepth].getClassName() + ".");
+            this.writer.append(ste[addedCallDepth].getMethodName());
             if (ste[2].getFileName() != null) {
-                this.writer.append(" in " + ste[3].getFileName());
+                this.writer.append(" in " + ste[addedCallDepth].getFileName());
             }
             if (ste[2].getLineNumber() >= 0) {
-                this.writer.append(" at " + ste[3].getLineNumber());
+                this.writer.append(" at " + ste[addedCallDepth].getLineNumber());
             }
             this.writer.append(",");
             this.writer.append("\"" + message.replace("\"", "\"\"") + "\"");
