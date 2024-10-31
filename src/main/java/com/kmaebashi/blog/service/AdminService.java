@@ -105,6 +105,8 @@ public class AdminService {
         newSectionElem.attr("id", "section-box1");
         Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
         fileInputElem.attr("data-section", "1");
+        Element pasteFromClipboardButtonElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("paste-from-clipboard"));
+        pasteFromClipboardButtonElem.attr("data-section", "1");
         sectionContainerElem.appendChild(newSectionElem);
         Element blogPostTitleElem = doc.getElementById("blog-post-title");
         blogPostTitleElem.attr("value", "");
@@ -160,6 +162,8 @@ public class AdminService {
             }
             Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
             fileInputElem.attr("data-section", "" + sectionNumber);
+            Element pasteFromClipboardButtonElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("paste-from-clipboard"));
+            pasteFromClipboardButtonElem.attr("data-section", "" + sectionNumber);
             sectionContainerElem.appendChild(newSectionElem);
             jsonSectionList.put("section"+ sectionNumber, JsonArray.newInstance(jsonPhotoList));
 

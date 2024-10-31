@@ -86,7 +86,7 @@ public class FileLogger implements Logger {
 
             this.writer.append(level.toString() + ",");
 
-            this.writer.append("" + Thread.currentThread().getId() + ",");
+            this.writer.append("" + Thread.currentThread().threadId() + ",");
 
             StackTraceElement[] ste = Thread.currentThread().getStackTrace();
             this.writer.append(ste[addedCallDepth].getClassName() + ".");

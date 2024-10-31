@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
     fileInputButtons[i].onchange = imageFileInputOnChange;
   }
 
+  const pasteFromClipboardButtons = sectionContainer.getElementsByClassName("paste-from-clipboard");
+  for (let i = 0; i < pasteFromClipboardButtons.length; i++) {
+    pasteFromClipboardButtons[i].onclick = pasteFromClipboard;
+  }
+
   const addSectionButton = document.getElementById("add-section-button");
   addSectionButton.onclick = addSection;
 
@@ -78,12 +83,38 @@ function imageFileInputOnChange(event) {
     return;
   }
   const section = parseInt(event.target.dataset.section);
-  const url = "./api/postimages";
+
   const formData = new FormData();
   formData.append("section", section);
   for (let i = 0; i < files.length; i++) {
     formData.append("file" + i, files[i]);
   }
+
+  postImages(section, formData);
+  event.target.value = "";
+}
+
+async function pasteFromClipboard(event) {
+  const section = parseInt(event.target.dataset.section);
+
+  const formData = new FormData();
+  formData.append("section", section);
+
+  const clipboardContents = await navigator.clipboard.read();
+  for (const item of clipboardContents) {
+    console.log("item.types.." + item.types);
+    if (!item.types.includes("image/png")) {
+      alert("画像ではありません");
+    }
+    const blob = await item.getType("image/png");
+    const file = new File([blob], "dummy.png");
+    formData.append("file0", file);
+  }
+  postImages(section, formData);
+}
+
+function postImages(section, formData) {
+  const url = "./api/postimages";
   const uploadingDialog = document.getElementById("now-uploading-dialog");
   uploadingDialog.showModal();
   console.log("showModal()");
@@ -98,6 +129,7 @@ function imageFileInputOnChange(event) {
         return response.json()
       })
       .then((result) => {
+        saveCaptions(section);
         console.log("fetch pass2");
         addPhotos(section, result);
         console.log("fetch pass3");
@@ -111,7 +143,6 @@ function imageFileInputOnChange(event) {
       .catch((e) => {
         console.warn("画像のアップロードでエラー" + e.message);
       });
-  event.target.value = "";
 }
 
 function addPhotos(section, newPhotoArray) {
@@ -218,9 +249,15 @@ function addSection() {
   cloneSectionDiv.getElementsByClassName("one-photo")[0].remove();
   const sectionTitle = cloneSectionDiv.getElementsByClassName("section-title")[0];
   sectionTitle.innerText = "セクション" + sectionNumber;
+
   const fileInputButton = cloneSectionDiv.getElementsByClassName("image-file-input")[0];
   fileInputButton.setAttribute("data-section", sectionNumber);
   fileInputButton.onchange = imageFileInputOnChange;
+
+  const pasteFromClipboardButton = cloneSectionDiv.getElementsByClassName("paste-from-clipboard")[0];
+  pasteFromClipboardButton.setAttribute("data-section", sectionNumber);
+  pasteFromClipboardButton.onclick = pasteFromClipboard;
+
   const deleteSectionButtonElem = cloneSectionDiv.getElementsByClassName("section-delete-button")[0]
   deleteSectionButtonElem.dataset.section = sectionNumber;
   deleteSectionButtonElem.onclick = deleteSection;

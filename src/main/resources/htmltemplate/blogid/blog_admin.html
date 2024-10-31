@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="../css/destyle.css">
-    <link rel="stylesheet" href="../css/blog_admin.css?20241006">
-    <script src="../js/blog_admin.js?20240929"></script>
+    <link rel="stylesheet" href="../css/blog_admin.css?20241031">
+    <script src="../js/blog_admin.js?20241031"></script>
     <title id="blog-head-title">ロードバイク乗りのおっさんの日記 管理者画面</title>
   </head>
   <body>
@@ -54,6 +54,7 @@
             </div>
             <label for="input">画像をアップロード：</label>
             <input type="file" class="image-file-input" name="image-data" multiple="multiple">
+            <p><button class="paste-from-clipboard">クリップボードから貼り付け</button></p>
           </div>
           <div id="section-container">
             <div class="section-box">
@@ -115,8 +116,9 @@
                   </div>
                 </div>
               </div>
-              <p>画像をアップロード：</p>
+              <label for="input">画像をアップロード：</label>
               <input type="file" data-section="1"  class="image-file-input" name="image-data" multiple="multiple">
+              <p><button class="paste-from-clipboard">クリップボードから貼り付け</button></p>
             </div>
             <div class="section-box">
               <p class="section-title">セクション2</p>
@@ -199,6 +201,7 @@
               </div>
               <p>画像をアップロード：</p>
               <input type="file" data-section="2"  class="image-file-input" name="image-data" multiple="multiple">
+              <p><button class="paste-from-clipboard">クリップボードから貼り付け</button></p>
             </div>
           </div>
           <p><button id="add-section-button">セクションの追加</button></p>
