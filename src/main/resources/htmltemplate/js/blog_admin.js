@@ -70,9 +70,9 @@ function refreshSectionAttr(secElem, section) {
 // photosInThisPageの構造
 // {
 //   "section1": [
-//     {"id": <画像ID>, "caption": "キャプション"},
-//     {"id": <画像ID>, "caption": "キャプション"},
-//     {"id": <画像ID>, "caption": "キャプション"}
+//     {"id": <画像ID>, "caption": "キャプション", isOgImage: true},
+//     {"id": <画像ID>, "caption": "キャプション", isOgImage: false},
+//     {"id": <画像ID>, "caption": "キャプション", isOgImage: false}
 //   ],
 //   ...
 // }
@@ -183,6 +183,10 @@ function refreshSectionPhotos(section) {
     captionElem.setAttribute("id", "photo-caption-" + sectionPhotos[i].id);
     captionElem.value = sectionPhotos[i].caption;
 
+    const radioElem = captionElem.parentElement.parentElement
+                             .querySelector("input[type='radio'][name='og-image']");
+    radioElem.checked = sectionPhotos[i].isOgImage;
+
     photoDiv.appendChild(newOnePhotoElem);
   }
   console.log("refreshSectionPhotos pass5");
@@ -235,6 +239,8 @@ function saveCaptions(section) {
   }
   for (let i = 0; i < photoArray.length; i++) {
     photoArray[i].caption = captionList[i].value;
+    photoArray[i].isIgImage = captionList[i].parentElement.parentElement
+                                 .querySelector("input[type='radio'][name='og-image']").checked;
   }
 }
 
@@ -330,7 +336,10 @@ function postArticle(publishFlag) {
       for (let photoIdx = 0; photoIdx < photos.length; photoIdx++) {
         const photoObj = {};
         photoObj.id = photos[photoIdx].id;
-        photoObj.caption = document.getElementById("photo-caption-" + photos[photoIdx].id).value;
+        const captionElem = document.getElementById("photo-caption-" + photos[photoIdx].id);
+        photoObj.caption = captionElem.value;
+        photoObj.isOgImage = captionElem.parentElement.parentElement
+                                 .querySelector("input[type='radio'][name='og-image']").checked;
         section.photos.push(photoObj);
       }
     }
@@ -341,6 +350,7 @@ function postArticle(publishFlag) {
   if (metaElem !== null) {
     csrfToken = metaElem.content;
   }
+  console.log("post.." + post);
   fetch("./api/postarticle", {
         method: "POST",
         headers: {

@@ -153,11 +153,16 @@ public class AdminService {
                 Element captionElem = newPhotoElem.getElementsByClass("photo-caption").first();
                 captionElem.attr("id", "photo-caption-" + photoDto.photoId);
                 captionElem.text(photoDto.caption);
+                Element ogImageRadioElem = newPhotoElem.selectFirst("input[type='radio'][name='og-image']");
+                if (photoDto.isOgImage) {
+                    ogImageRadioElem.attr("checked", true);
+                }
 
                 photoAreaElem.appendChild(newPhotoElem);
                 Map<String, JsonElement> jsonPhotoMap = new HashMap<>();
                 jsonPhotoMap.put("id", JsonValue.createIntValue(photoDto.photoId));
                 jsonPhotoMap.put("caption", JsonValue.createStringValue(photoDto.caption));
+                jsonPhotoMap.put("isOgImage", JsonValue.createBooleanValue(photoDto.isOgImage));
                 jsonPhotoList.add(JsonObject.newInstance(jsonPhotoMap));
             }
             Element fileInputElem = JsoupUtil.getFirst(newSectionElem.getElementsByClass("image-file-input"));
@@ -207,7 +212,7 @@ public class AdminService {
                 int displayOrder = 1;
                 for (ArticlePhoto photo : article.sectionArray[secIdx].photos) {
                     BlogPostDbAccess.linkPhotoToBlogPost(context.getDbAccessInvoker(),
-                            photo.id, blogId, blogPostId, secIdx + 1, displayOrder, photo.caption);
+                            photo.id, blogId, blogPostId, secIdx + 1, displayOrder, photo.caption, photo.isOgImage);
                     displayOrder++;
                 }
             }

@@ -57,14 +57,22 @@ public class BlogPostDbAccess {
                       POST.TITLE,
                       POST.POSTED_DATE,
                       SEC.BODY AS SECTION_TEXT,
-                      PHOTOS.PHOTO_ID
+                      COALESCE(PHOTOS2.PHOTO_ID, PHOTOS1.PHOTO_ID) AS PHOTO_ID
                     FROM BLOG_POSTS POST
                     LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
                       ON POST.BLOG_POST_ID = SEC.BLOG_POST_ID
-                    LEFT OUTER JOIN PHOTOS
-                      ON PHOTOS.PHOTO_ID = (
+                    LEFT OUTER JOIN PHOTOS PHOTOS1
+                      ON PHOTOS1.PHOTO_ID = (
                         SELECT PHOTO_ID FROM PHOTOS
                         WHERE PHOTOS.BLOG_POST_ID = POST.BLOG_POST_ID
+                        ORDER BY SECTION_NUMBER, DISPLAY_ORDER
+                        LIMIT 1
+                      )
+                    LEFT OUTER JOIN PHOTOS PHOTOS2
+                      ON PHOTOS2.PHOTO_ID = (
+                        SELECT PHOTO_ID FROM PHOTOS
+                        WHERE PHOTOS.BLOG_POST_ID = POST.BLOG_POST_ID
+                          AND PHOTOS.IS_OG_IMAGE = TRUE
                         ORDER BY SECTION_NUMBER, DISPLAY_ORDER
                         LIMIT 1
                       )
@@ -331,7 +339,7 @@ public class BlogPostDbAccess {
 
     public static int linkPhotoToBlogPost(DbAccessInvoker invoker,
                                           int photoId, String blogId, int blogPostId, int sectionNumber, int displayOrder,
-                                          String caption) {
+                                          String caption, boolean isOgImage) {
         return invoker.invoke((context) -> {
             String sql = """
                     UPDATE PHOTOS SET
@@ -339,6 +347,7 @@ public class BlogPostDbAccess {
                       SECTION_NUMBER = :SECTION_NUMBER,
                       DISPLAY_ORDER = :DISPLAY_ORDER,
                       CAPTION = :CAPTION,
+                      IS_OG_IMAGE = :IS_OG_IMAGE,
                       UPDATED_AT = now()
                     WHERE
                       BLOG_ID = :BLOG_ID
@@ -351,6 +360,7 @@ public class BlogPostDbAccess {
             params.put("SECTION_NUMBER", sectionNumber);
             params.put("DISPLAY_ORDER", displayOrder);
             params.put("CAPTION", caption);
+            params.put("IS_OG_IMAGE", isOgImage);
             params.put("BLOG_ID", blogId);
             params.put("PHOTO_ID", photoId);
             npps.setParameters(params);

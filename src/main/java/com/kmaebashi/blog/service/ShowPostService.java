@@ -254,7 +254,7 @@ public class ShowPostService {
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostDto.blogPostId);
         int sectionNumber = 1;
-        String firstPhotoPath = null;
+        String ogImagePhotoPath = null;
         for (BlogPostSectionDto sectionDto : sectionList) {
             if (sectionNumber == 1) {
                 ShowPostService.setMetaProperty(doc, "og:description", Util.cutString(sectionDto.body, 60));
@@ -277,8 +277,8 @@ public class ShowPostService {
                 Element imgElem = doc.createElement("img");
                 String photoPath = "api/getimage/" + photoDto.blogPostId + "/" + photoDto.photoId;
                 imgElem.attr("src",  getBlogRoot(blogId, PathLevel.POST) + photoPath);
-                if (firstPhotoPath == null) {
-                    firstPhotoPath = photoPath;
+                if (ogImagePhotoPath == null || photoDto.isOgImage) {
+                    ogImagePhotoPath = photoPath;
                 }
                 Element orgSizeAElem = doc.createElement("a");
                 orgSizeAElem.appendChild(imgElem);
@@ -295,8 +295,8 @@ public class ShowPostService {
             }
             sectionNumber++;
         }
-        if (firstPhotoPath != null) {
-            String photoUrl = url.replaceFirst("post/\\d+$", firstPhotoPath);
+        if (ogImagePhotoPath != null) {
+            String photoUrl = url.replaceFirst("post/\\d+$", ogImagePhotoPath);
             ShowPostService.setMetaProperty(doc, "og:image", photoUrl);
         }
     }

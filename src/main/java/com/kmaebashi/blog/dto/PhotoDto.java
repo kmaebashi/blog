@@ -19,4 +19,7 @@ public class PhotoDto {
 
     @TableColumn("CAPTION")
     public String caption;
+
+    @TableColumn("IS_OG_IMAGE")
+    public boolean isOgImage;
 }
