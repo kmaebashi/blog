@@ -84,13 +84,12 @@ function imageFileInputOnChange(event) {
   }
   const section = parseInt(event.target.dataset.section);
 
-  const formData = new FormData();
-  formData.append("section", section);
   for (let i = 0; i < files.length; i++) {
-    formData.append("file" + i, files[i]);
+    const formData = new FormData();
+    formData.append("section", section);
+    formData.append("file0", files[i]);
+    postImage(section, formData);
   }
-
-  postImages(section, formData);
   event.target.value = "";
 }
 
@@ -110,10 +109,10 @@ async function pasteFromClipboard(event) {
     const file = new File([blob], "dummy.png");
     formData.append("file0", file);
   }
-  postImages(section, formData);
+  postImage(section, formData);
 }
 
-function postImages(section, formData) {
+function postImage(section, formData) {
   const url = "./api/postimages";
   const uploadingDialog = document.getElementById("now-uploading-dialog");
   uploadingDialog.showModal();
