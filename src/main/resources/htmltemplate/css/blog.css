@@ -37,6 +37,7 @@ h1 {
   font-size: 16px;
   margin: 5px 5px 5px 5px;
 }
+
 header {
   background-color: #3261ab;
   height: 60px;
@@ -199,6 +200,59 @@ p.sidebar-title {
   font-size: 22px;
 }
 
+#container-main h2 {
+  font-weight: bold;
+  font-size: 19px;
+}
+
+#container-main h3 {
+  font-weight: bold;
+  font-size: 17px;
+}
+
+#container-main h4 {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+#container-main blockquote {
+  position:relative;
+  margin: 5px;
+  border-left: 3px solid #83a0ce;
+  padding: 20px 5px 20px 10px;
+  background-color: #f4f7fb;
+}
+
+#container-main blockquote:before {
+  position: absolute;
+  content: '“';
+  font-size: 30px;
+  color: #83a0ce;
+  top: 0px;
+  left: 5px;
+}
+
+#container-main blockquote:after{
+  position:absolute;
+  content:'”';
+  font-size: 30px;
+  color: #83a0ce;
+  right: 10px;
+  bottom: 0px;
+}
+
+#container-main ul {
+  all: revert;
+  padding-left: 20px;
+}
+#container-main ol {
+  all: revert;
+  padding-left: 20px;
+}
+#container-main li {
+  all: revert;
+}
+
 #container-main hr {
   margin: 0.5em 10px 1em;
 }
@@ -212,6 +266,7 @@ p.sidebar-title {
 #container-main p {
   line-height: 1.5;
 }
+
 
 div.newer-older-area {
   display: flex;

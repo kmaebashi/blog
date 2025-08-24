@@ -77,19 +77,22 @@ function refreshSectionAttr(secElem, section) {
 //   ...
 // }
 
-function imageFileInputOnChange(event) {
+async function imageFileInputOnChange(event) {
   const files = event.target.files;
   if (files.length == 0) {
     return;
   }
   const section = parseInt(event.target.dataset.section);
 
+  startUploading();
   for (let i = 0; i < files.length; i++) {
     const formData = new FormData();
     formData.append("section", section);
     formData.append("file0", files[i]);
-    postImage(section, formData);
+    await postImage(section, formData);
+    showUploadingProgress(i + 1, files.length);
   }
+  endUploading();
   event.target.value = "";
 }
 
@@ -109,39 +112,52 @@ async function pasteFromClipboard(event) {
     const file = new File([blob], "dummy.png");
     formData.append("file0", file);
   }
-  postImage(section, formData);
+  startUploading();
+  await postImage(section, formData);
+  endUploading();
 }
 
-function postImage(section, formData) {
-  const url = "./api/postimages";
+function startUploading() {
   const uploadingDialog = document.getElementById("now-uploading-dialog");
   uploadingDialog.showModal();
-  console.log("showModal()");
-  let req = new Request(url, {
+  console.log("startUploading");
+}
+
+function endUploading() {
+  const uploadingDialog = document.getElementById("now-uploading-dialog");
+  uploadingDialog.close();
+  console.log("endUploading");
+}
+
+function showUploadingProgress(numerator, denominator) {
+  const messageElem = document.getElementById("now-uploading-dialog-message");
+  messageElem.innerText = "(" + numerator + "/" + denominator + ")";
+}
+
+
+
+async function postImage(section, formData) {
+  const url = "./api/postimages";
+
+  const response = await fetch(url, {
       body: formData,
       method: "POST",
       mode: "no-cors"
-    });
-    fetch(req)
-      .then((response) => {
-        console.log("fetch pass1");
-        return response.json()
-      })
-      .then((result) => {
-        saveCaptions(section);
-        console.log("fetch pass2");
-        addPhotos(section, result);
-        console.log("fetch pass3");
-        refreshSectionPhotos(section);
-        console.log("fetch pass4");
-        const sectionDiv = document.getElementById("section-box" + section);
-        refreshSectionAttr(sectionDiv, section);
-        uploadingDialog.close();
-        console.log("close()");
-      })
-      .catch((e) => {
-        console.warn("画像のアップロードでエラー" + e.message);
-      });
+  });
+
+  console.log("response.." + response.status);
+  if (!response.ok) {
+    console.log("エラー! retJson.." + retJson);
+    alert("画像のアップロードでエラーが発生しました。" + retJson.message);
+    return;
+  }
+  const retJson = await response.json();
+
+  saveCaptions(section);
+  addPhotos(section, retJson);
+  refreshSectionPhotos(section);
+  const sectionDiv = document.getElementById("section-box" + section);
+  refreshSectionAttr(sectionDiv, section);
 }
 
 function addPhotos(section, newPhotoArray) {
@@ -156,22 +172,18 @@ function addPhotos(section, newPhotoArray) {
 }
 
 function refreshSectionPhotos(section) {
-  console.log("refreshSectionPhotos pass1");
   if (!("section" + section) in photosInThisPage) {
     console.log("ないはずはない");
     return;
   }
-  console.log("refreshSectionPhotos pass2");
   const sectionDiv = document.getElementById("section-box" + section);
   const photoDiv = sectionDiv.getElementsByClassName("photo-area")[0];
   while (photoDiv.firstChild) {
     photoDiv.removeChild(photoDiv.firstChild);
   }
-  console.log("refreshSectionPhotos pass3");
   const sectionPhotos = photosInThisPage["section" + section];
   const onePhotoTemplateElem = document.getElementById("hidden-section-box")
                                        .getElementsByClassName("one-photo")[0];
-  console.log("refreshSectionPhotos pass4");
 
   for (let i = 0; i < sectionPhotos.length; i++) {
     const newOnePhotoElem = onePhotoTemplateElem.cloneNode(true);
@@ -188,7 +200,6 @@ function refreshSectionPhotos(section) {
 
     photoDiv.appendChild(newOnePhotoElem);
   }
-  console.log("refreshSectionPhotos pass5");
 }
 
 function deletePhoto(event) {

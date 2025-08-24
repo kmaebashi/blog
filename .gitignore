@@ -42,3 +42,6 @@ build/
 !/test_output/.gitkeep
 
 *~
+out/
+properties/
+releasebuild.bat

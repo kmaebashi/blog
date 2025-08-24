@@ -37,6 +37,15 @@ public class Util {
         return nl2Br(linkCreated);
     }
 
+    static String escapeHtmlChar(char src) {
+        return src == '&' ? "&amp;"
+                : src == '"' ? "&quot;"
+                : src == '<' ? "&lt;"
+                : src == '>' ? "&gt;"
+                : src == '\'' ? "&#39;"
+                : Character.toString(src);
+    }
+
     static String nl2Br(String str) {
         str = str.replaceAll("\r\n", "<br>");
         str = str.replaceAll("\n", "<br>");
@@ -53,7 +62,7 @@ public class Util {
     }
 
     public static String createLinkAnchor(String src) {
-        return  src.replaceAll("(http://|https://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+]+",
+        return  src.replaceAll("(http://|https://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+\\@]+",
                 "<a href=\"$0\">$0</a>");
     }
 

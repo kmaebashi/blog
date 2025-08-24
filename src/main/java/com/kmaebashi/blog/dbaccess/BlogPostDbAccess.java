@@ -580,7 +580,7 @@ public class BlogPostDbAccess {
         return invoker.invoke((context) -> {
             String sql = """
                     DELETE FROM BLOG_POST_SECTIONS
-                    WHERE BLOG_POST_ID = :BLOG_POST_ID                     
+                    WHERE BLOG_POST_ID = :BLOG_POST_ID
                     """;
             NamedParameterPreparedStatement npps
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);

@@ -21,4 +21,28 @@ class UtilTest {
         assertEquals("ab🍰🍺", Util.cutString("ab🍰🍺", 4));
         assertEquals("ab🍰🍺", Util.cutString("ab🍰🍺", 5));
     }
+
+    @Test
+    void createLinkAnchor001() {
+        String src = "なんとか https://kmaebashi.com かんとか";
+        String result = Util.createLinkAnchor(src);
+        assertEquals("なんとか <a href=\"https://kmaebashi.com\">https://kmaebashi.com</a> かんとか", result);
+    }
+
+    @Test
+    void createLinkAnchor002() {
+        String src = "なんとか https://www.youtube.com/@someone かんとか";
+        String result = Util.createLinkAnchor(src);
+        assertEquals("なんとか <a href=\"https://www.youtube.com/@someone\">https://www.youtube.com/@someone</a> かんとか", result);
+    }
+
+    @Test
+    void escapeHtmlCharTest001() {
+        assertEquals("&amp;", Util.escapeHtmlChar('&'));
+        assertEquals("&quot;", Util.escapeHtmlChar('"'));
+        assertEquals("&lt;", Util.escapeHtmlChar('<'));
+        assertEquals("&gt;", Util.escapeHtmlChar('>'));
+        assertEquals("&#39;", Util.escapeHtmlChar('\''));
+        assertEquals("a", Util.escapeHtmlChar('a'));
+    }
 }

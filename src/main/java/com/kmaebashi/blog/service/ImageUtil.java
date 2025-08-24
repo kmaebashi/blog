@@ -205,7 +205,7 @@ public class ImageUtil {
                 int tagNo = read2Byte(app1Data, offset, byteOrder);
 
                 if (tagNo == 0x0112) {
-                    orientation = read4Byte(app1Data, offset + 8, byteOrder);
+                    orientation = read2Byte(app1Data, offset + 8, byteOrder);
                     int tagType = read2Byte(app1Data, offset + 2, byteOrder);
                     int numOfValues = read4Byte(app1Data, offset + 4, byteOrder);
                     if (tagType != 3 || numOfValues != 1) {
