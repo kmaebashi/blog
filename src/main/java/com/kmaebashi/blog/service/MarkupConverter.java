@@ -12,7 +12,8 @@ public class MarkupConverter {
         IN_H2,
         IN_H3,
         IN_LINE,
-        IN_FOOTNOTE
+        IN_FOOTNOTE,
+        IN_LINK
     }
 
     private enum ListType {
@@ -36,7 +37,11 @@ public class MarkupConverter {
         LI_OL2,
         LI_OL3,
         FOOTNOTE_START,
-        FOOTNOTE_END
+        FOOTNOTE_END,
+        LINK_START,
+        LINK_COM_START,
+        B_START,
+        B_END
     }
 
     private static class MarkDef {
@@ -87,6 +92,12 @@ public class MarkupConverter {
         new MarkDef(Mark.LI_OL3, "+", "<li>", true, false, ListType.OL, 1),
         new MarkDef(Mark.FOOTNOTE_START, "((", null,false, false),
         new MarkDef(Mark.FOOTNOTE_END, "))", null,false, false),
+        new MarkDef(Mark.LINK_START, "http://", null,false, false),
+        new MarkDef(Mark.LINK_START, "https://", null,false, false),
+        new MarkDef(Mark.LINK_COM_START, "[http://", null, false, false),
+        new MarkDef(Mark.LINK_COM_START, "[https://", null, false, false),
+        new MarkDef(Mark.B_START, "[b]", "<b>", false, false),
+        new MarkDef(Mark.B_END, "[/b]", "</b>", false, false),
     };
 
     private boolean inParagraph = false;
@@ -135,7 +146,7 @@ public class MarkupConverter {
                         writeTag(md.htmlStr + Constants.CRLF);
                         i += markLenBuf[0];
                     } else if (md.type == Mark.LI_UL1 || md.type == Mark.LI_UL2 || md.type == Mark.LI_UL3
-                               || md.type == Mark.LI_OL1 || md.type == Mark.LI_OL2 || md.type == Mark.LI_OL3) {
+                            || md.type == Mark.LI_OL1 || md.type == Mark.LI_OL2 || md.type == Mark.LI_OL3) {
                         endParagraph();
                         if (md.liLevel == listStack.size() + 1) {
                             // レベルが1増えた
@@ -166,8 +177,8 @@ public class MarkupConverter {
                 case IN_H3:
                     if (src.charAt(i) == '\n') {
                         String closeHtml = (status == Status.IN_H1 ? "</h2>"
-                                            : status == Status.IN_H2 ? "</h3>"
-                                            : "</h4>");
+                                : status == Status.IN_H2 ? "</h3>"
+                                : "</h4>");
                         writeTag(closeHtml);
                         writeTag(Constants.CRLF);
                         status = Status.LINE_HEAD;
@@ -183,22 +194,32 @@ public class MarkupConverter {
                         status = Status.IN_FOOTNOTE;
                         i += markLenBuf[0];
                         currentFootnoteSb = new StringBuilder();
+                        this.targetSb = currentFootnoteSb;
                         status = Status.IN_FOOTNOTE;
                     } else if (status == Status.IN_FOOTNOTE && md != null && md.type == Mark.FOOTNOTE_END) {
                         footnoteList.add(currentFootnoteSb);
+                        currentFootnoteSb = null;
+                        this.targetSb = mainSb;
                         outputFootnoteLink(footnoteList.size());
                         i += markLenBuf[0];
-                        currentFootnoteSb = null;
                         status = Status.IN_LINE;
-
+                    } else if (md != null && md.type == Mark.LINK_START) {
+                        int[] linkLenBuf = new int[1];
+                        String url = getLinkUrl(src, i, linkLenBuf);
+                        i += linkLenBuf[0];
+                        writeTag("<a href=\"" + url + "\">" + url + "</a>");
+                    } else if (md != null && md.type == Mark.LINK_COM_START) {
+                        i++; // [の分
+                        int[] lenBuf = new int[1];
+                        String url = getLinkUrl(src, i, lenBuf);
+                        i += lenBuf[0];
+                        String title = getLinkTitle(src, i, lenBuf);
+                        i += lenBuf[0];
+                        writeTag("<a href=\"" + url + "\">" + (title != null ? title : url) + "</a>");
+                    } else if (md != null && (md.type == Mark.B_START || md.type == Mark.B_END)) {
+                        writeTag(md.htmlStr);
+                        i += markLenBuf[0];
                     } else {
-                        StringBuilder targetSb;
-
-                        if (status == Status.IN_LINE) {
-                            this.targetSb = mainSb;
-                        } else {
-                            this.targetSb = currentFootnoteSb;
-                        }
                         if (src.charAt(i) == '\n') {
                             this.setBr = true;
                             writeText(Constants.CRLF);
@@ -233,7 +254,7 @@ public class MarkupConverter {
             sb.append("</ul>" + Constants.CRLF);
             return sb.toString();
         } else {
-            return "";
+            return null;
         }
     }
 
@@ -312,5 +333,55 @@ public class MarkupConverter {
                 writeTag("</ol>" + Constants.CRLF);
             }
         }
+    }
+
+    static String getLinkUrl(String src, int i, int[] linkLenBuf) {
+        StringBuilder sb = new StringBuilder();
+        String head = src.substring(i, i + 5);
+        int idx;
+        if (head.equals("http:")) {
+            idx = 7; // http://
+            sb.append("http://");
+        } else {
+            assert head.equals("https") : "リンクの開始になっていない";
+            idx = 8; // https://
+            sb.append("https://");
+        }
+        for (; (i + idx) < src.length(); idx++) {
+            char ch = src.charAt(i + idx);
+            if (Character.isLetterOrDigit(ch)
+                || "_.-:#?=&;%~+@".indexOf(ch) >= 0) {
+                sb.append(ch);
+            } else {
+                break;
+            }
+        }
+        linkLenBuf[0] = idx;
+        return sb.toString();
+    }
+
+    static String getLinkTitle (String src, int i, int[] linkLenBuf) {
+        String title = null;
+        String head = src.substring(i, i + 7); // :title=
+        int len = 0;
+        if (head.equals(":title=")) {
+            StringBuilder sb = new StringBuilder();
+            len = 7;
+            char ch;
+            while ((ch = src.charAt(i + len)) != ']') {
+                sb.append(ch);
+                len++;
+            }
+            len++;
+            title = sb.toString();
+        } else {
+            while (src.charAt(i + len) != ']') {
+                len++;
+            }
+            len++;
+        }
+        linkLenBuf[0] = len;
+
+        return title;
     }
 }

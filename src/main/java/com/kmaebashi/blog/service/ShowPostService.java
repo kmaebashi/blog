@@ -251,6 +251,7 @@ public class ShowPostService {
 
         Element postBodyElem = JsoupUtil.getFirst(oneBlogPostElem.getElementsByClass("blog-post-body"));
         postBodyElem.empty();
+        MarkupConverter converter = new MarkupConverter(false);
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostDto.blogPostId);
         int sectionNumber = 1;
@@ -259,7 +260,8 @@ public class ShowPostService {
             if (sectionNumber == 1) {
                 ShowPostService.setMetaProperty(doc, "og:description", Util.cutString(sectionDto.body, 60));
             }
-            appendParagraph(doc, postBodyElem, sectionDto.body);
+            String converted = converter.convert(sectionDto.body);
+            postBodyElem.html(converted);
             List<PhotoDto> photoList
                     = BlogPostDbAccess.getBlogPostPhoto(context.getDbAccessInvoker(),
                     blogPostDto.blogPostId, sectionNumber);
@@ -288,7 +290,11 @@ public class ShowPostService {
                 photoPElem.appendChild(orgSizeAElem);
                 if (captionContainerElem != null) {
                     captionContainerElem.appendChild(photoPElem);
-                    appendParagraph(doc, captionContainerElem, photoDto.caption);
+                    Element captionDiv = doc.createElement("div");
+                    String convertedCaption = converter.convert(photoDto.caption);
+                    captionDiv.html(convertedCaption);
+                    captionContainerElem.appendChild(captionDiv);
+
                 } else {
                     postBodyElem.appendChild(photoPElem);
                 }
@@ -298,6 +304,12 @@ public class ShowPostService {
         if (ogImagePhotoPath != null) {
             String photoUrl = url.replaceFirst("post/\\d+$", ogImagePhotoPath);
             ShowPostService.setMetaProperty(doc, "og:image", photoUrl);
+        }
+        String footnoteHtml = converter.getFootnoteStr();
+        if (footnoteHtml != null) {
+            Element footnoteDivElem = doc.createElement("div");
+            footnoteDivElem.html(footnoteHtml);
+            postBodyElem.appendChild(footnoteDivElem);
         }
     }
 
@@ -400,9 +412,10 @@ public class ShowPostService {
     }
 
     private static void appendSummary(Document doc, Element parent, String text) {
-        String str = text.replace("\\r", "").replace("\\n", " ");
+        MarkupConverter converter = new MarkupConverter(true);
+        String str = converter.convert(text);
         Element pElem = doc.createElement("p");
-        pElem.text(str.toString());
+        pElem.text(str);
         parent.appendChild(pElem);
     }
 

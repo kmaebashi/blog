@@ -26,9 +26,55 @@ class MarkupConverterTest {
                 "+箇条書き2\n" +
                 "-箇条書き・\n" +
                 "-箇条書き・\n" +
-                "エスケープ<p>&;";
+                "エスケープ<p>&;\n" +
+                ">|\n" +
+                "#include <stdio.h>\n" +
+                "|<\n" +
+                "https://kmaebashi.com\n" +
+                "リンクは[https://kmaebashi.com:title=こちら]です。\n" +
+                "リンクは[http://kmaebashi.com:title=こちら]です。\n" +
+                "ここは[b]太字[/b]";
         String converted = converter.convert(src);
         String footnote = converter.getFootnoteStr();
+
+        String expected = "<h2>はじめに</h2>\r\n" +
+                "<p>はじめの説明をここに書く\r\n" +
+                "</p>\r\n" +
+                "<h2>1章</h2>\r\n" +
+                "<h3>なんとかかんとか</h3>\r\n" +
+                "<p>なんとか改行\r\n" +
+                "<br>\r\n" +
+                "なんとか<a href=\"#footnote1\">※1</a></sup>。\r\n" +
+                "</p>\r\n" +
+                "<h4>うんとかすんとか</h4>\r\n" +
+                "<blockquote>\r\n" +
+                "<p>引用\r\n" +
+                "<br>\r\n" +
+                "引用の中の２行目\r\n" +
+                "</p>\r\n" +
+                "</blockquote>\r\n" +
+                "<ol>\r\n" +
+                "<li>箇条書き1\r\n" +
+                "</ol>\r\n" +
+                "<p>1の続き+箇条書き2\r\n" +
+                "</p>\r\n" +
+                "<ul>\r\n" +
+                "<li>箇条書き・\r\n" +
+                "<li>箇条書き・\r\n" +
+                "</ul>\r\n" +
+                "<p>エスケープ&lt;p&gt;&amp;;\r\n" +
+                "</p>\r\n" +
+                "<pre>\r\n" +
+                "<p>#include &lt;stdio.h&gt;\r\n" +
+                "</p>\r\n" +
+                "</pre>\r\n";
+        String expectedFootnote = "\r\n" +
+                "<hr>\r\n" +
+                "<ul class=\"footnote\">\r\n" +
+                "<li><a name=\"footnote1\">※1</a>なんとかの脚注です\r\n" +
+                "</ul>\r\n";
+        assertEquals(expected, converted);
+        assertEquals(expectedFootnote, footnote);
     }
 
     @Test
@@ -153,6 +199,64 @@ class MarkupConverterTest {
                 "<li>箇条&lt;書き&gt;1\r\n" +
                 "</ol>\r\n" +
                 "<p>1の&#39;続き&#39;エスケープ&lt;p&gt;&amp;;", converted);
+    }
+
+    @Test
+    void convertTest004() {
+        MarkupConverter converter = new MarkupConverter(false);
+
+        String src = ">>あい<<https://kmaebashi.com";
+        String converted = converter.convert(src);
+    }
+
+
+    @Test
+    void getLinkUrlTest001() {
+        String src = "あいうえおhttps://kmaebashi.com?param=123なんとか";
+        int[] linkLenBuf = new int[1];
+        String ret = MarkupConverter.getLinkUrl(src, 5, linkLenBuf);
+        assertEquals("https://kmaebashi.com?param=123なんとか", ret);
+        assertEquals(35, linkLenBuf[0]);
+    }
+
+    @Test
+    void getLinkUrlTest002() {
+        String src = "あいうえおhttp://kmaebashi.com?param=123\r\nなんとか";
+        int[] linkLenBuf = new int[1];
+        String ret = MarkupConverter.getLinkUrl(src, 5, linkLenBuf);
+        assertEquals("http://kmaebashi.com?param=123", ret);
+        assertEquals(31, linkLenBuf[0]);
+    }
+
+    @Test
+    void getLinkUrlTest003() {
+        String src = "あいうえおhttps://kmaebashi.com?param=123 なんとか";
+        int[] linkLenBuf = new int[1];
+        String ret = MarkupConverter.getLinkUrl(src, 5, linkLenBuf);
+        assertEquals("https://kmaebashi.com?param=123", ret);
+        assertEquals(31, linkLenBuf[0]);
+    }
+
+    @Test
+    void getLinkTitleTest001() {
+        String src = "１２３[https://kmaebashi.com:title=K.Maebashi's home page]あ";
+        int i = 25;
+        int[] linkLenBuf = new int[1];
+        String title = MarkupConverter.getLinkTitle(src, 25, linkLenBuf);
+        i += linkLenBuf[0];
+        assertEquals("K.Maebashi's home page", title);
+        assertEquals('あ', src.charAt(i));
+    }
+
+    @Test
+    void getLinkTitleTest002() {
+        String src = "１２３[https://kmaebashi.com:xxx=K.Maebashi's home page]あ";
+        int i = 25;
+        int[] linkLenBuf = new int[1];
+        String title = MarkupConverter.getLinkTitle(src, 25, linkLenBuf);
+        i += linkLenBuf[0];
+        assertNull(title);
+        assertEquals('あ', src.charAt(i));
     }
 
 }
