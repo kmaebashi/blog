@@ -258,10 +258,13 @@ public class ShowPostService {
         String ogImagePhotoPath = null;
         for (BlogPostSectionDto sectionDto : sectionList) {
             if (sectionNumber == 1) {
-                ShowPostService.setMetaProperty(doc, "og:description", Util.cutString(sectionDto.body, 60));
+                String summary = getSummary(sectionDto.body, Constants.OG_DESCRIPTION_LENGTH);
+                ShowPostService.setMetaProperty(doc, "og:description", summary);
             }
             String converted = converter.convert(sectionDto.body);
-            postBodyElem.html(converted);
+            Element sectionBodyDiv = doc.createElement("div");
+            sectionBodyDiv.html(converted);
+            postBodyElem.appendChild(sectionBodyDiv);
             List<PhotoDto> photoList
                     = BlogPostDbAccess.getBlogPostPhoto(context.getDbAccessInvoker(),
                     blogPostDto.blogPostId, sectionNumber);
@@ -412,11 +415,18 @@ public class ShowPostService {
     }
 
     private static void appendSummary(Document doc, Element parent, String text) {
-        MarkupConverter converter = new MarkupConverter(true);
-        String str = converter.convert(text);
+        String summary = getSummary(text, Constants.POST_LIST_TEXT_LENGTH);
         Element pElem = doc.createElement("p");
-        pElem.text(str);
+        pElem.text(summary);
         parent.appendChild(pElem);
+    }
+
+    private static String getSummary(String src, int length) {
+        MarkupConverter converter = new MarkupConverter(true);
+        String str = converter.convert(src);
+        String cutText = Util.cutString(str, Constants.POST_LIST_TEXT_LENGTH);
+
+        return cutText;
     }
 
     private static void renderOlderNewerLink(ServiceContext context, Document doc, String blogId, int blogPostId)

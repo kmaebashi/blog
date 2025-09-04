@@ -30,9 +30,10 @@ class MarkupConverterTest {
                 ">|\n" +
                 "#include <stdio.h>\n" +
                 "|<\n" +
+                "http://kmaebashi.com\n" +
                 "https://kmaebashi.com\n" +
-                "リンクは[https://kmaebashi.com:title=こちら]です。\n" +
-                "リンクは[http://kmaebashi.com:title=こちら]です。\n" +
+                "リンクは[https://kmaebashi.com title=こちら]です。\n" +
+                "リンクは[http://kmaebashi.com  title=こちら]です。\n" +
                 "ここは[b]太字[/b]";
         String converted = converter.convert(src);
         String footnote = converter.getFootnoteStr();
@@ -67,7 +68,16 @@ class MarkupConverterTest {
                 "<pre>\r\n" +
                 "<p>#include &lt;stdio.h&gt;\r\n" +
                 "</p>\r\n" +
-                "</pre>\r\n";
+                "</pre>\r\n" +
+                "<p><a href=\"http://kmaebashi.com\">http://kmaebashi.com</a>\r\n" +
+                "<br>\r\n" +
+                "<a href=\"https://kmaebashi.com\">https://kmaebashi.com</a>\r\n" +
+                "<br>\r\n" +
+                "リンクは<a href=\"https://kmaebashi.com\">こちら</a>です。\r\n" +
+                "<br>\r\n" +
+                "リンクは<a href=\"http://kmaebashi.com\">こちら</a>です。\r\n" +
+                "<br>\r\n" +
+                "ここは<b>太字</b></p>\r\n";
         String expectedFootnote = "\r\n" +
                 "<hr>\r\n" +
                 "<ul class=\"footnote\">\r\n" +
@@ -198,7 +208,8 @@ class MarkupConverterTest {
                 "<ol>\r\n" +
                 "<li>箇条&lt;書き&gt;1\r\n" +
                 "</ol>\r\n" +
-                "<p>1の&#39;続き&#39;エスケープ&lt;p&gt;&amp;;", converted);
+                "<p>1の&#39;続き&#39;エスケープ&lt;p&gt;&amp;;</p>\r\n",
+                converted);
     }
 
     @Test
@@ -225,7 +236,7 @@ class MarkupConverterTest {
         int[] linkLenBuf = new int[1];
         String ret = MarkupConverter.getLinkUrl(src, 5, linkLenBuf);
         assertEquals("http://kmaebashi.com?param=123", ret);
-        assertEquals(31, linkLenBuf[0]);
+        assertEquals(30, linkLenBuf[0]);
     }
 
     @Test
@@ -239,10 +250,12 @@ class MarkupConverterTest {
 
     @Test
     void getLinkTitleTest001() {
-        String src = "１２３[https://kmaebashi.com:title=K.Maebashi's home page]あ";
-        int i = 25;
+        String src = "１２３[https://kmaebashi.com  title=K.Maebashi's home page]あ";
+        int i = 4;
         int[] linkLenBuf = new int[1];
-        String title = MarkupConverter.getLinkTitle(src, 25, linkLenBuf);
+        String url = MarkupConverter.getLinkUrl(src, i, linkLenBuf);
+        i += linkLenBuf[0];
+        String title = MarkupConverter.getLinkTitle(src, i, linkLenBuf);
         i += linkLenBuf[0];
         assertEquals("K.Maebashi's home page", title);
         assertEquals('あ', src.charAt(i));
@@ -250,7 +263,7 @@ class MarkupConverterTest {
 
     @Test
     void getLinkTitleTest002() {
-        String src = "１２３[https://kmaebashi.com:xxx=K.Maebashi's home page]あ";
+        String src = "１２３[https://kmaebashi.com xxx=K.Maebashi's home page]あ";
         int i = 25;
         int[] linkLenBuf = new int[1];
         String title = MarkupConverter.getLinkTitle(src, 25, linkLenBuf);

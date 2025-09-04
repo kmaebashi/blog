@@ -49,22 +49,20 @@ public class MarkupConverter {
         String str;
         String htmlStr;
         boolean lineHead;
-        boolean withLf;
         ListType listType;
         int liLevel;
 
-        MarkDef(Mark type, String str, String htmlStr, boolean lineHead, boolean withLf, ListType listType, int liLevel) {
+        MarkDef(Mark type, String str, String htmlStr, boolean lineHead, ListType listType, int liLevel) {
             this.type = type;
             this.str = str;
             this.htmlStr = htmlStr;
             this.lineHead = lineHead;
-            this.withLf = withLf;
             this.listType = listType;
             this.liLevel = liLevel;
         }
 
-        MarkDef(Mark type, String str, String htmlStr, boolean lineHead, boolean withLf) {
-            this(type, str, htmlStr, lineHead, withLf, ListType.NOT_LIST, 0);
+        MarkDef(Mark type, String str, String htmlStr, boolean lineHead) {
+            this(type, str, htmlStr, lineHead, ListType.NOT_LIST, 0);
         }
     }
 
@@ -77,27 +75,27 @@ public class MarkupConverter {
     }
 
     private static MarkDef[] markDef = new MarkDef[] {
-        new MarkDef(Mark.H3, "***", "<h4>", true, false),
-        new MarkDef(Mark.H2, "**", "<h3>", true, false),
-        new MarkDef(Mark.H1, "*", "<h2>", true, false),
-        new MarkDef(Mark.QUOTE_START, ">>", "<blockquote>", true, true),
-        new MarkDef(Mark.QUOTE_END, "<<", "</blockquote>", true, true),
-        new MarkDef(Mark.PRE_START, ">|", "<pre>", true, true),
-        new MarkDef(Mark.PRE_END, "|<", "</pre>", true, true),
-        new MarkDef(Mark.LI_UL1, "---", "<li>", true, false, ListType.UL, 3),
-        new MarkDef(Mark.LI_UL2, "--", "<li>", true, false, ListType.UL, 2),
-        new MarkDef(Mark.LI_UL3, "-", "<li>", true, false, ListType.UL, 1),
-        new MarkDef(Mark.LI_OL1, "+++", "<li>", true, false, ListType.OL, 3),
-        new MarkDef(Mark.LI_OL2, "++", "<li>", true, false, ListType.OL, 2),
-        new MarkDef(Mark.LI_OL3, "+", "<li>", true, false, ListType.OL, 1),
-        new MarkDef(Mark.FOOTNOTE_START, "((", null,false, false),
-        new MarkDef(Mark.FOOTNOTE_END, "))", null,false, false),
-        new MarkDef(Mark.LINK_START, "http://", null,false, false),
-        new MarkDef(Mark.LINK_START, "https://", null,false, false),
-        new MarkDef(Mark.LINK_COM_START, "[http://", null, false, false),
-        new MarkDef(Mark.LINK_COM_START, "[https://", null, false, false),
-        new MarkDef(Mark.B_START, "[b]", "<b>", false, false),
-        new MarkDef(Mark.B_END, "[/b]", "</b>", false, false),
+        new MarkDef(Mark.H3, "***", "<h4>", true),
+        new MarkDef(Mark.H2, "**", "<h3>", true),
+        new MarkDef(Mark.H1, "*", "<h2>", true),
+        new MarkDef(Mark.QUOTE_START, ">>\n", "<blockquote>", true),
+        new MarkDef(Mark.QUOTE_END, "<<\n", "</blockquote>", true),
+        new MarkDef(Mark.PRE_START, ">|\n", "<pre>", true),
+        new MarkDef(Mark.PRE_END, "|<\n", "</pre>", true),
+        new MarkDef(Mark.LI_UL1, "---", "<li>", true, ListType.UL, 3),
+        new MarkDef(Mark.LI_UL2, "--", "<li>", true, ListType.UL, 2),
+        new MarkDef(Mark.LI_UL3, "-", "<li>", true, ListType.UL, 1),
+        new MarkDef(Mark.LI_OL1, "+++", "<li>", true, ListType.OL, 3),
+        new MarkDef(Mark.LI_OL2, "++", "<li>", true, ListType.OL, 2),
+        new MarkDef(Mark.LI_OL3, "+", "<li>", true, ListType.OL, 1),
+        new MarkDef(Mark.FOOTNOTE_START, "((", null,false),
+        new MarkDef(Mark.FOOTNOTE_END, "))", null,false),
+        new MarkDef(Mark.LINK_START, "http://", null,false),
+        new MarkDef(Mark.LINK_START, "https://", null,false),
+        new MarkDef(Mark.LINK_COM_START, "[http://", null, false),
+        new MarkDef(Mark.LINK_COM_START, "[https://", null, false),
+        new MarkDef(Mark.B_START, "[b]", "<b>", false),
+        new MarkDef(Mark.B_END, "[/b]", "</b>", false),
     };
 
     private boolean inParagraph = false;
@@ -207,7 +205,9 @@ public class MarkupConverter {
                         int[] linkLenBuf = new int[1];
                         String url = getLinkUrl(src, i, linkLenBuf);
                         i += linkLenBuf[0];
-                        writeTag("<a href=\"" + url + "\">" + url + "</a>");
+                        writeTag("<a href=\"" + url + "\">");
+                        writeText(Util.escapeHtml(url));
+                        writeTag("</a>");
                     } else if (md != null && md.type == Mark.LINK_COM_START) {
                         i++; // [の分
                         int[] lenBuf = new int[1];
@@ -215,7 +215,9 @@ public class MarkupConverter {
                         i += lenBuf[0];
                         String title = getLinkTitle(src, i, lenBuf);
                         i += lenBuf[0];
-                        writeTag("<a href=\"" + url + "\">" + (title != null ? title : url) + "</a>");
+                        writeTag("<a href=\"" + url + "\">");
+                        writeText(Util.escapeHtml(title != null ? title : url));
+                        writeTag("</a>");
                     } else if (md != null && (md.type == Mark.B_START || md.type == Mark.B_END)) {
                         writeTag(md.htmlStr);
                         i += markLenBuf[0];
@@ -234,6 +236,7 @@ public class MarkupConverter {
                     assert false : "status.." + status;
             }
         }
+        endParagraph();
         if (listStack.size() > 0) {
             subListLevel(listStack.size(), listStack);
         }
@@ -274,17 +277,17 @@ public class MarkupConverter {
                 continue;
 
             int mIdx;
-            for (mIdx = 0; mIdx < md.str.length(); mIdx++) {
+            for (mIdx = 0; mIdx < md.str.length() && srcIdx + mIdx < src.length(); mIdx++) {
                 if (src.charAt(srcIdx + mIdx) != md.str.charAt(mIdx)) {
                     break;
                 }
             }
             if (mIdx == md.str.length()) {
-                if (md.withLf) {
-                    lenBuf[0] = md.str.length() + 1;
-                } else {
-                    lenBuf[0] = md.str.length();
-                }
+                lenBuf[0] = md.str.length();
+                return md;
+            } else if (md.str.endsWith("\n") && mIdx == md.str.length() - 1
+                       && srcIdx == src.length()) {
+                lenBuf[0] = md.str.length() - 1;
                 return md;
             }
         }
@@ -292,7 +295,7 @@ public class MarkupConverter {
     }
 
     private void outputFootnoteLink(int number) {
-        writeTag("<a href=\"#footnote" + number + "\">※" + number + "</a></sup>");
+        writeTag("<sup><a href=\"#footnote" + number + "\">※" + number + "</a></sup>");
     }
 
     private void startLine() {
@@ -350,7 +353,7 @@ public class MarkupConverter {
         for (; (i + idx) < src.length(); idx++) {
             char ch = src.charAt(i + idx);
             if (Character.isLetterOrDigit(ch)
-                || "_.-:#?=&;%~+@".indexOf(ch) >= 0) {
+                || "/_.-:#?=&;%~+@".indexOf(ch) >= 0) {
                 sb.append(ch);
             } else {
                 break;
@@ -360,13 +363,19 @@ public class MarkupConverter {
         return sb.toString();
     }
 
-    static String getLinkTitle (String src, int i, int[] linkLenBuf) {
+    static String getLinkTitle(String src, int i, int[] linkLenBuf) {
         String title = null;
-        String head = src.substring(i, i + 7); // :title=
         int len = 0;
-        if (head.equals(":title=")) {
+        while (src.charAt(i + len) == ' ') {
+            len++;
+        }
+        String head = null;
+        if (src.length() > i + len + 6) { // 6.. title=
+            head = src.substring(i + len, i + len + 6);
+        }
+        if (head != null && head.equals("title=")) {
             StringBuilder sb = new StringBuilder();
-            len = 7;
+            len += 6;
             char ch;
             while ((ch = src.charAt(i + len)) != ']') {
                 sb.append(ch);
