@@ -254,6 +254,7 @@ public class BlogPostDbAccess {
                       TITLE,
                       POSTED_DATE,
                       STATUS,
+                      IS_PUBLISHED,
                       CREATED_AT,
                       UPDATED_AT
                     ) VALUES (
@@ -262,6 +263,7 @@ public class BlogPostDbAccess {
                       :TITLE,
                       :POSTED_DATE,
                       :STATUS,
+                      :IS_PUBLISHED,
                       now(),
                       now()
                     )                
@@ -274,6 +276,7 @@ public class BlogPostDbAccess {
             params.put("TITLE", title);
             params.put("POSTED_DATE", postedDate);
             params.put("STATUS", status.intValue());
+            params.put("IS_PUBLISHED", status == BlogPostStatus.PUBLISHED);
             npps.setParameters(params);
 
             int result = npps.getPreparedStatement().executeUpdate();
@@ -494,7 +497,7 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static List<CommentDto> getCommentsByBlogId(DbAccessInvoker invoker, String blogId) {
+    public static List<CommentDto> getCommentsByBlogId(DbAccessInvoker invoker, String blogId, int offset, int limit) {
         return invoker.invoke((context) -> {
             String sql = """
                     SELECT
@@ -503,13 +506,40 @@ public class BlogPostDbAccess {
                       POSTER_ID,
                       POSTER_NAME,
                       MESSAGE,
+                      BLOG_POST_COMMENTS.CREATED_AT CREATED_AT,
                       BLOG_POSTS.TITLE BLOG_POST_TITLE
                     FROM BLOG_POST_COMMENTS
                     INNER JOIN BLOG_POSTS
                       ON BLOG_POSTS.BLOG_POST_ID = BLOG_POST_COMMENTS.BLOG_POST_ID
                     WHERE BLOG_POSTS.BLOG_ID = :BLOG_ID
+                      AND BLOG_POSTS.STATUS = 2
                     ORDER BY BLOG_POST_COMMENTS.CREATED_AT DESC
-                    LIMIT 10
+                    OFFSET :OFFSET
+                    LIMIT :LIMIT
+                    """;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            params.put("OFFSET", offset);
+            params.put("LIMIT", limit);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<CommentDto> dtoList = ResultSetMapper.toDtoList(rs, CommentDto.class);
+
+            return dtoList;
+        });
+    }
+
+    public static int getCommentCountByBlogId(DbAccessInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            String sql = """
+                    SELECT
+                      COUNT(*)
+                    FROM BLOG_POST_COMMENTS
+                    INNER JOIN BLOG_POSTS
+                      ON BLOG_POSTS.BLOG_POST_ID = BLOG_POST_COMMENTS.BLOG_POST_ID
+                    WHERE BLOG_POSTS.BLOG_ID = :BLOG_ID
                     """;
             NamedParameterPreparedStatement npps
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
@@ -517,9 +547,10 @@ public class BlogPostDbAccess {
             params.put("BLOG_ID", blogId);
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
-            List<CommentDto> dtoList = ResultSetMapper.toDtoList(rs, CommentDto.class);
+            rs.next();
+            int count = rs.getInt("COUNT");
 
-            return dtoList;
+            return count;
         });
     }
 
@@ -550,12 +581,14 @@ public class BlogPostDbAccess {
     }
 
     public static int updateBlogPost(DbAccessInvoker invoker, int blogPostId, String blogId, String title,
-                                     LocalDateTime postedDate, BlogPostStatus status) {
+                                     LocalDateTime postedDate, BlogPostStatus status, boolean isPublished) {
         return invoker.invoke((context) -> {
             String sql = """
                     UPDATE BLOG_POSTS SET
                       TITLE = :TITLE,
+                      POSTED_DATE = :POSTED_DATE,
                       STATUS = :STATUS,
+                      IS_PUBLISHED = :IS_PUBLISHED,
                       UPDATED_AT = now()
                     WHERE
                       BLOG_ID = :BLOG_ID
@@ -565,7 +598,9 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("TITLE", title);
+            params.put("POSTED_DATE", postedDate);
             params.put("STATUS", status.intValue());
+            params.put("IS_PUBLISHED", isPublished);
             params.put("BLOG_POST_ID", blogPostId);
             params.put("BLOG_ID", blogId);
             npps.setParameters(params);

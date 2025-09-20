@@ -114,6 +114,10 @@ p.sidebar-title {
   font-size: 16px;
 }
 
+p.sidebar-see-more {
+  text-align: right;
+}
+
 #blog-description-area {
   padding: 5px;
   background-color: #ffffff;
@@ -324,6 +328,10 @@ p.commented-by {
   border-color: #000000;
   width: 80%;
   height: 200px;
+}
+
+div#pagenation-area {
+  text-align: center;
 }
 
 footer {

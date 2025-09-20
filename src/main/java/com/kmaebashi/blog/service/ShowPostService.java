@@ -126,6 +126,58 @@ public class ShowPostService {
         });
     }
 
+    public static DocumentResult showTitleList(ServiceInvoker invoker, String blogId, int page) {
+        return invoker.invoke((context) -> {
+            BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
+            if (blogDto == null) {
+                throw new BadRequestException("ブログ" + blogId + "はありません。");
+            }
+            List<BlogPostDto> blogPostDtoList
+                    = BlogPostDbAccess.getBlogPostList(context.getDbAccessInvoker(), blogId,
+                    (page - 1) * Constants.NUM_OF_BLOG_TITLES_PER_PAGE,
+                    Constants.NUM_OF_BLOG_TITLES_PER_PAGE);
+            int postCount = BlogPostDbAccess.getBlogPostCountByBlogId(context.getDbAccessInvoker(), blogId, null, null);
+            Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/title_list/title_list.html");
+            Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
+            ShowPostService.setProperties(doc, PathLevel.DATE, LocalDate.now());
+            replacePathForBlogList(doc, false);
+            ShowPostService.renderHeadTitleTop(doc, blogDto, page);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.DATE);
+            ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
+            ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
+            ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
+            ShowPostService.renderTitleList(context, doc, blogId, blogPostDtoList, page, postCount);
+
+            return new DocumentResult(doc);
+        });
+    }
+
+    public static DocumentResult showCommentList(ServiceInvoker invoker, String blogId, int page) {
+        return invoker.invoke((context) -> {
+            BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
+            if (blogDto == null) {
+                throw new BadRequestException("ブログ" + blogId + "はありません。");
+            }
+            List<CommentDto> commentDtoList
+                    = BlogPostDbAccess.getCommentsByBlogId(context.getDbAccessInvoker(), blogId,
+                                (page - 1) * Constants.NUM_OF_BLOG_TITLES_PER_PAGE,
+                                Constants.NUM_OF_BLOG_TITLES_PER_PAGE);
+            int commentCount = BlogPostDbAccess.getCommentCountByBlogId(context.getDbAccessInvoker(), blogId);
+            Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/comment_list/comment_list.html");
+            Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
+            ShowPostService.setProperties(doc, PathLevel.DATE, LocalDate.now());
+            replacePathForBlogList(doc, false);
+            ShowPostService.renderHeadTitleTop(doc, blogDto, page);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.DATE);
+            ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
+            ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
+            ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
+            ShowPostService.renderCommentList(context, doc, blogId, commentDtoList, page, commentCount);
+
+            return new DocumentResult(doc);
+        });
+    }
+
     public static JsonResult getPostCountEachDay(ServiceInvoker invoker, String blogId, LocalDate month) {
         return invoker.invoke((context) -> {
             List<BlogPostCountEachDayDto> dtoList
@@ -216,10 +268,13 @@ public class ShowPostService {
             liElem.appendChild(aElem);
             ulElem.appendChild(liElem);
         }
+
+        Element seeMoreA = doc.select("#recent-posts-area .sidebar-see-more a").first();
+        seeMoreA.attr("href", getBlogRoot(blogId, pathLevel) + "list");
     }
 
     private static void renderRecentComments(ServiceContext context, Document doc, String blogId, PathLevel pathLevel) {
-        List<CommentDto> commentList = BlogPostDbAccess.getCommentsByBlogId(context.getDbAccessInvoker(), blogId);
+        List<CommentDto> commentList = BlogPostDbAccess.getCommentsByBlogId(context.getDbAccessInvoker(), blogId, 0, 10);
 
         Element ulElem = doc.select("#recent-comment-area ul").first();
         ulElem.empty();
@@ -233,6 +288,8 @@ public class ShowPostService {
             liElem.appendChild(aElem);
             ulElem.appendChild(liElem);
         }
+        Element seeMoreA = doc.select("#recent-comment-area .sidebar-see-more a").first();
+        seeMoreA.attr("href", getBlogRoot(blogId, pathLevel) + "commentlist");
     }
 
     private static DateTimeFormatter postedDateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
@@ -511,5 +568,100 @@ public class ShowPostService {
     private static void renderForFacebook(Document doc, String url) {
         Element shareButtonElem = doc.getElementById("facebook-share-button");
         shareButtonElem.dataset().put("href", url);
+    }
+
+    private static void renderTitleList(ServiceContext context, Document doc, String blogId, List<BlogPostDto> blogPostDtoList,
+                                        int page, int postCount) {
+        Element ulElem = doc.getElementById("blog-post-title-list");
+        Element firstLi = ulElem.getElementsByTag("li").first();
+        Element templateLi = firstLi.clone();
+        ulElem.empty();
+        for (BlogPostDto dto : blogPostDtoList) {
+            Element newLi = templateLi.clone();
+            Element aElem = newLi.getElementsByTag("a").first();
+            aElem.attr("href", "post/" + dto.blogPostId);
+            Element dateSpan = aElem.getElementsByClass("title-list-date").first();
+            dateSpan.text(dto.postedDate.format(postedDateFormatter));
+            Element titleSpan = aElem.getElementsByClass("title-list-title").first();
+            titleSpan.text(dto.title);
+            ulElem.appendChild(newLi);
+        }
+        renderPagenation(context, doc, blogId, "list", page, postCount);
+    }
+
+    private static void renderCommentList(ServiceContext context, Document doc, String blogId, List<CommentDto> commentDtoList,
+                                        int page, int commentCount) {
+        Element ulElem = doc.getElementById("blog-comment-list");
+        Element firstLi = ulElem.getElementsByTag("li").first();
+        Element templateLi = firstLi.clone();
+        ulElem.empty();
+        for (CommentDto dto : commentDtoList) {
+            Element newLi = templateLi.clone();
+            Element aElem = newLi.getElementsByTag("a").first();
+            aElem.attr("href", "post/" + dto.blogPostId + "#comment" + dto.commentId);
+            Element dateSpan = aElem.getElementsByClass("comment-list-date").first();
+            dateSpan.text(dto.createdAt.format(postedDateFormatter));
+            Element titleSpan = aElem.getElementsByClass("comment-list-title").first();
+            titleSpan.text(dto.blogPostTitle);
+            Element posterSpan = aElem.getElementsByClass("comment-list-poster").first();
+            posterSpan.text(dto.posterName);
+            ulElem.appendChild(newLi);
+        }
+        renderPagenation(context, doc, blogId, "commentlist", page, commentCount);
+    }
+
+    private static void renderPagenation(ServiceContext context, Document doc, String blogId, String mode,
+                                         int page, int totalCount) {
+        int[] pageCountBuf = new int[1];
+        int startPage = calcPagenationStart(totalCount, page, pageCountBuf);
+        int pageCount = pageCountBuf[0];
+
+        Element divElem = doc.getElementById("pagenation-area");
+        divElem.empty();
+        if (page > 1) {
+            Element prevA = doc.createElement("a");
+            prevA.attr("href", mode + "?page=" + (page - 1));
+            prevA.text("≪");
+            divElem.appendChild(prevA);
+        }
+        for (int i = 0; i < (pageCount - startPage + 1) && i < Constants.NUM_OF_PAGENATION; i++) {
+            Element numElem;
+            if (startPage + i == page) {
+                numElem = doc.createElement("span");
+            } else {
+                numElem = doc.createElement("a");
+                numElem.attr("href", mode + "?page=" + (startPage + i));
+            }
+            numElem.text(" " + (startPage + i));
+            divElem.appendChild(numElem);
+        }
+        if (page < pageCount) {
+            Element nextA = doc.createElement("a");
+            nextA.attr("href", mode + "?page=" + (page + 1));
+            nextA.text(" ≫");
+            divElem.appendChild(nextA);
+        }
+    }
+
+    // pageCountBuf[0]..ページ数
+    static int calcPagenationStart(int itemCount, int page, int[] pageCountBuf) {
+        int pageCount = (itemCount + Constants.NUM_OF_BLOG_TITLES_PER_PAGE - 1)
+                            / Constants.NUM_OF_BLOG_TITLES_PER_PAGE;
+        int adjustedPage = page;
+        if (page < 1) {
+            adjustedPage = 1;
+        } else if (page > pageCount) {
+            adjustedPage = pageCount;
+        }
+        int startIdx;
+        if (adjustedPage <= Constants.NUM_OF_PAGENATION / 2) {
+            startIdx = 1;
+        } else if (adjustedPage > (pageCount - Constants.NUM_OF_PAGENATION / 2)) {
+            startIdx = pageCount - Constants.NUM_OF_PAGENATION + 1;
+        } else {
+            startIdx = adjustedPage - (Constants.NUM_OF_PAGENATION / 2) + 1;
+        }
+        pageCountBuf[0] = pageCount;
+        return startIdx;
     }
 }

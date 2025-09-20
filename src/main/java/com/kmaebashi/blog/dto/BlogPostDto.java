@@ -17,4 +17,7 @@ public class BlogPostDto {
 
     @TableColumn("STATUS")
     public int status;
+
+    @TableColumn("IS_PUBLISHED")
+    public boolean isPublished;
 }

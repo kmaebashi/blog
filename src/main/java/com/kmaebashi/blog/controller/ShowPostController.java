@@ -120,6 +120,42 @@ public class ShowPostController {
         });
     }
 
+    public static RoutingResult showTitleList(ControllerInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
+            }
+            DocumentResult result
+                    = ShowPostService.showTitleList(context.getServiceInvoker(), blogId, page);
+
+            return result;
+        });
+    }
+
+    public static RoutingResult showCommentList(ControllerInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
+            }
+            DocumentResult result
+                    = ShowPostService.showCommentList(context.getServiceInvoker(), blogId, page);
+
+            return result;
+        });
+    }
+
     public static RoutingResult getPostCountEachDay(ControllerInvoker invoker, String blogId) {
         return invoker.invoke((context) -> {
             String monthStr = context.getServletRequest().getParameter("month");

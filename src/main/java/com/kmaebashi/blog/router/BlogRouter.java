@@ -92,7 +92,12 @@ public class BlogRouter extends Router {
                 String blogId = (String) params.get("blog_id");
                 int blogPostId = (int) params.get("blog_post_id");
                 return ShowPostController.showPostByPostId(invoker, blogId, blogPostId, currentUserId, false);
-
+            } else if (route == Route.TITLE_LIST) {
+                String blogId = (String) params.get("blog_id");
+                return ShowPostController.showTitleList(invoker, blogId);
+            } else if (route == Route.COMMENT_LIST) {
+                String blogId = (String) params.get("blog_id");
+                return ShowPostController.showCommentList(invoker, blogId);
             } else if (route == Route.PREVIEW_POST) {
                 if (currentUserId == null) {
                     return redirectToLoginPage(request, path);

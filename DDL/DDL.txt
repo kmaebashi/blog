@@ -1,0 +1,120 @@
+create database blogdb;
+create schema blog;
+
+-- A5 Mk2なのでスキーマ切り替えはGUIで
+create user bloguser
+password 'iP#sMPK,jb0e';
+
+ALTER ROLE bloguser WITH PASSWORD 'XXXXXX';
+
+ALTER ROLE bloguser password 'iP#sMPK,jb0e';
+
+
+grant usage on schema blog to bloguser;
+
+create table users (
+  user_id varchar(32) primary key,
+  password varchar(256) not null,
+  mail_address varchar(32),
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+create table profiles (
+  user_id varchar(32) primary key,
+  nickname varchar(32) not null,
+  image_path varchar(64),
+  about_me text not null,
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+create table blogs (
+  blog_id varchar(32) primary key,
+  title varchar(64) not null,
+  description text not null,
+  owner_user varchar(32) not null,
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+create table blog_posts (
+  blog_post_id integer primary key,
+  blog_id varchar(32) not null,
+  title varchar(64) not null,
+  posted_date timestamp not null,
+  status integer not null,
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+create table blog_post_sections (
+  blog_post_id integer,
+  section_seq integer,
+  body text not null,
+  created_at timestamp not null,
+  updated_at timestamp not null,
+  primary key (blog_post_id, section_seq)
+);
+
+create table photos (
+  photo_id integer primary key,
+  blog_id varchar(32) not null,
+  blog_post_id integer,
+  section_number integer not null,
+  path varchar(64) not null,
+  display_order integer,
+  caption text,
+  is_og_image boolean,
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+ALTER TABLE photos ALTER COLUMN display_order DROP NOT NULL;
+ALTER TABLE photos ALTER COLUMN section_number DROP NOT NULL;
+
+create table blog_post_comments (
+  blog_post_id integer not null,
+  comment_id integer not null,
+  poster_id varchar(32),
+  poster_name varchar(32) not null,
+  message text not null,
+  created_at timestamp not null,
+  updated_at timestamp not null,
+  primary key (blog_post_id, comment_id)
+);
+
+create sequence photo_sequence;
+create sequence blog_post_sequence;
+
+grant select, insert, update, delete on all tables in schema blog to bloguser;
+grant select, update on all sequences in schema blog to bloguser;
+
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2025/09/14 blog_postsに列を足す操作
+
+create table blog_posts_new (
+  blog_post_id integer primary key,
+  blog_id varchar(32) not null,
+  title varchar(64) not null,
+  posted_date timestamp not null,
+  status integer not null,
+  is_published boolean not null,
+  created_at timestamp not null,
+  updated_at timestamp not null
+);
+
+insert into blog_posts_new (
+  blog_post_id, blog_id, title, posted_date, status, is_published, created_at, updated_at
+) select 
+  blog_post_id, blog_id, title, posted_date, status, true, created_at, updated_at
+from blog_posts;
+
+alter table blog_posts rename to blog_posts_bak;
+alter table blog_posts_new rename to blog_posts;
+
+grant select, insert, update, delete on all tables in schema blog to bloguser;
+grant select, update on all sequences in schema blog to bloguser;
+
+
+

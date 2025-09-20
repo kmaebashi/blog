@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.time.LocalTime.now;
+
 public class AdminService {
     private AdminService() {}
 
@@ -196,9 +198,13 @@ public class AdminService {
                         article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT);
             } else {
                 blogPostId = article.blogPostId;
+                BlogPostDto blogPostDto
+                        = BlogPostDbAccess.getBlogPost(context.getDbAccessInvoker(), blogId, blogPostId);
+                LocalDateTime postedDate = blogPostDto.isPublished ? blogPostDto.postedDate : LocalDateTime.now();
                 BlogPostDbAccess.updateBlogPost(context.getDbAccessInvoker(),
-                        blogPostId, blogId, article.title, LocalDateTime.now(),
-                        article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT);
+                        blogPostId, blogId, article.title, postedDate,
+                        article.publishFlag ? BlogPostStatus.PUBLISHED : BlogPostStatus.DRAFT,
+                        blogPostDto.isPublished || article.publishFlag);
             }
 
             if (article.blogPostId != null) {
