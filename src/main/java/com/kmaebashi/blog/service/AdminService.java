@@ -2,6 +2,7 @@ package com.kmaebashi.blog.service;
 
 import com.kmaebashi.blog.common.ApiStatus;
 import com.kmaebashi.blog.common.BlogPostStatus;
+import com.kmaebashi.blog.common.Constants;
 import com.kmaebashi.blog.controller.data.ArticleData;
 import com.kmaebashi.blog.controller.data.ArticlePhoto;
 import com.kmaebashi.blog.controller.data.PostArticleStatus;
@@ -47,7 +48,9 @@ public class AdminService {
             if (!blogDto.ownerUser.equals(currentUserId)) {
                 throw new BadRequestException("ブログの所有者ではありません。");
             }
-            List<BlogPostDto> blogPostList = BlogPostDbAccess.getBlogPostForAdmin(context.getDbAccessInvoker(), blogId);
+            List<BlogPostDto> blogPostList
+                    = BlogPostDbAccess.getBlogPostForAdmin(context.getDbAccessInvoker(), blogId,
+                                                           0, Constants.NUM_OF_RECENT_POSTS_ADMIN);
 
             Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/blog_admin.html");
             Document doc = AdminService.renderBlog(htmlPath, blogId, blogDto, blogPostList);
@@ -64,11 +67,7 @@ public class AdminService {
     private static Document renderBlog(Path htmlPath, String blogId, BlogDto blogDto, List<BlogPostDto> blogPostList)
             throws Exception {
         Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
-
-        Element blogHeadTitleElem = doc.getElementById("blog-head-title");
-        blogHeadTitleElem.text(blogDto.title + " 管理画面");
-        Element blogTitleElem = doc.getElementById("blog-title");
-        blogTitleElem.text(blogDto.title + " 管理画面");
+        renderAdminHeader(doc, blogDto);
 
         Element sidebarRecentArticles = doc.getElementById("sidebar-recent-articles");
         Element[] items = sidebarRecentArticles.getElementsByTag("li").toArray(new Element[0]);
@@ -95,6 +94,13 @@ public class AdminService {
         }
 
         return doc;
+    }
+
+    public static void renderAdminHeader(Document doc, BlogDto blogDto) {
+        Element blogHeadTitleElem = doc.getElementById("blog-head-title");
+        blogHeadTitleElem.text(blogDto.title + " 管理画面");
+        Element blogTitleElem = doc.getElementById("blog-title");
+        blogTitleElem.text(blogDto.title + " 管理画面");
     }
 
     private static void renderNewPost(Document doc) throws Exception {

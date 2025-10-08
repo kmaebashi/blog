@@ -81,7 +81,7 @@ public class RssService {
             Element link2 = addChildElement(doc, item, "link");
             link2.setTextContent(createPostUrl(contextUrl, blogDto.blogId, postDto.blogPostId));
             Element description2 = addChildElement(doc,item, "description");
-            MarkupConverter converter = new MarkupConverter(true);
+            MarkupConverter converter = new MarkupConverter(MarkupConverterMode.SUMMARY_TEXT);
             String converted = converter.convert(postDto.sectionText);
             description2.setTextContent(Util.cutString(converted, Constants.RSS_DESCRIPTION_LENGTH));
             Element date = addChildElement(doc, item, "dc:date");

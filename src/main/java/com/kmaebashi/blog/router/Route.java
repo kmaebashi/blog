@@ -13,6 +13,7 @@ public enum Route {
     GET_ORIGINAL_SIZE_IMAGE,
     GET_PROFILE_IMAGE,
     ADMIN,
+    ADMIN_LIST,
     LOGIN,
     CHECK_PASSWORD,
     DO_LOGIN,

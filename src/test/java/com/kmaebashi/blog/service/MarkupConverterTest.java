@@ -8,14 +8,15 @@ class MarkupConverterTest {
 
     @Test
     void convertTest001() {
-        MarkupConverter converter = new MarkupConverter(false);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 
         String src = "*はじめに\n" +
                 "はじめの説明をここに書く\n" +
                 "*1章\n" +
                 "**なんとかかんとか\n" +
                 "なんとか改行\n" +
-                "なんとか((なんとかの脚注です))。\n" +
+                "なんとか((なんとかの脚注です。\n" +
+                "改行のあと。https://kmaebashi.com))。\n" +
                 "***うんとかすんとか\n" +
                 ">>\n" +
                 "引用\n" +
@@ -29,6 +30,7 @@ class MarkupConverterTest {
                 "エスケープ<p>&;\n" +
                 ">|\n" +
                 "#include <stdio.h>\n" +
+                "int main(int argc, char **argv)\n" +
                 "|<\n" +
                 "http://kmaebashi.com\n" +
                 "https://kmaebashi.com\n" +
@@ -45,7 +47,7 @@ class MarkupConverterTest {
                 "<h3>なんとかかんとか</h3>\r\n" +
                 "<p>なんとか改行\r\n" +
                 "<br>\r\n" +
-                "なんとか<a href=\"#footnote1\">※1</a></sup>。\r\n" +
+                "なんとか<sup><a href=\"#footnote1\">※1</a></sup>。\r\n" +
                 "</p>\r\n" +
                 "<h4>うんとかすんとか</h4>\r\n" +
                 "<blockquote>\r\n" +
@@ -66,8 +68,8 @@ class MarkupConverterTest {
                 "<p>エスケープ&lt;p&gt;&amp;;\r\n" +
                 "</p>\r\n" +
                 "<pre>\r\n" +
-                "<p>#include &lt;stdio.h&gt;\r\n" +
-                "</p>\r\n" +
+                "#include &lt;stdio.h&gt;\r\n" +
+                "int main(int argc, char **argv)\r\n" +
                 "</pre>\r\n" +
                 "<p><a href=\"http://kmaebashi.com\">http://kmaebashi.com</a>\r\n" +
                 "<br>\r\n" +
@@ -78,10 +80,11 @@ class MarkupConverterTest {
                 "リンクは<a href=\"http://kmaebashi.com\">こちら</a>です。\r\n" +
                 "<br>\r\n" +
                 "ここは<b>太字</b></p>\r\n";
-        String expectedFootnote = "\r\n" +
-                "<hr>\r\n" +
+
+        String expectedFootnote = "\r\n<hr>\r\n" +
                 "<ul class=\"footnote\">\r\n" +
-                "<li><a name=\"footnote1\">※1</a>なんとかの脚注です\r\n" +
+                "<li><a name=\"footnote1\">※1</a>なんとかの脚注です。<br>\r\n" +
+                "改行のあと。<a href=\"https://kmaebashi.com\">https://kmaebashi.com</a>\r\n" +
                 "</ul>\r\n";
         assertEquals(expected, converted);
         assertEquals(expectedFootnote, footnote);
@@ -89,7 +92,7 @@ class MarkupConverterTest {
 
     @Test
     void convertTest001_2() {
-        MarkupConverter converter = new MarkupConverter(true);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.SUMMARY_HTML);
 
         String src = "*はじめに\n" +
                 "はじめの説明をここに書く\n" +
@@ -114,7 +117,7 @@ class MarkupConverterTest {
 
     @Test
     void convertTest002() {
-        MarkupConverter converter = new MarkupConverter(false);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 
         String src =
                   "+OL1-1\n"
@@ -181,7 +184,7 @@ class MarkupConverterTest {
 
     @Test
     void convertTest003() {
-        MarkupConverter converter = new MarkupConverter(false);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 
         String src = "*<はじめに>\n" +
                 "本文&本文\n" +
@@ -214,7 +217,7 @@ class MarkupConverterTest {
 
     @Test
     void convertTest004() {
-        MarkupConverter converter = new MarkupConverter(false);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 
         String src = ">>あい<<https://kmaebashi.com";
         String converted = converter.convert(src);

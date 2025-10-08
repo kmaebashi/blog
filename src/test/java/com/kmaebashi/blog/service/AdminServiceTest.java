@@ -27,7 +27,7 @@ class AdminServiceTest {
     @BeforeAll
     static void connectDb() throws Exception {
         AdminServiceTest.conn = BlogTestUtil.getConnection();
-        AdminServiceTest.logger = new FileLogger("./log", "LoginServiceTest");
+        AdminServiceTest.logger = new FileLogger("./log", "AdminServiceTest");
     }
 
     @AfterAll

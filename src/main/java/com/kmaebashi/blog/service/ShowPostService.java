@@ -308,14 +308,15 @@ public class ShowPostService {
 
         Element postBodyElem = JsoupUtil.getFirst(oneBlogPostElem.getElementsByClass("blog-post-body"));
         postBodyElem.empty();
-        MarkupConverter converter = new MarkupConverter(false);
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
         List<BlogPostSectionDto> sectionList
                 = BlogPostDbAccess.getBlogPostSection(context.getDbAccessInvoker(), blogPostDto.blogPostId);
         int sectionNumber = 1;
         String ogImagePhotoPath = null;
         for (BlogPostSectionDto sectionDto : sectionList) {
             if (sectionNumber == 1) {
-                String summary = getSummary(sectionDto.body, Constants.OG_DESCRIPTION_LENGTH);
+                String summary = getSummary(sectionDto.body, MarkupConverterMode.SUMMARY_TEXT,
+                                            Constants.OG_DESCRIPTION_LENGTH);
                 ShowPostService.setMetaProperty(doc, "og:description", summary);
             }
             String converted = converter.convert(sectionDto.body);
@@ -399,7 +400,7 @@ public class ShowPostService {
                 Element imgElem = photoPElem.getElementsByTag("img").first();
                 imgElem.attr("src", getBlogRoot(blogId, pathLevel) + "api/getimage/" + postDto.blogPostId + "/" + postDto.photoId);
             }
-            appendSummary(doc, postBodyElem, Util.cutString(postDto.sectionText, Constants.POST_LIST_TEXT_LENGTH));
+            appendSummary(doc, postBodyElem, postDto.sectionText);
             containerMainElem.appendChild(oneBlogPostElem);
         }
     }
@@ -472,16 +473,16 @@ public class ShowPostService {
     }
 
     private static void appendSummary(Document doc, Element parent, String text) {
-        String summary = getSummary(text, Constants.POST_LIST_TEXT_LENGTH);
+        String summary = getSummary(text, MarkupConverterMode.SUMMARY_TEXT, Constants.POST_LIST_TEXT_LENGTH);
         Element pElem = doc.createElement("p");
         pElem.text(summary);
         parent.appendChild(pElem);
     }
 
-    private static String getSummary(String src, int length) {
-        MarkupConverter converter = new MarkupConverter(true);
+    private static String getSummary(String src, MarkupConverterMode mode, int length) {
+        MarkupConverter converter = new MarkupConverter(mode);
         String str = converter.convert(src);
-        String cutText = Util.cutString(str, Constants.POST_LIST_TEXT_LENGTH);
+        String cutText = Util.cutString(str, length);
 
         return cutText;
     }
@@ -586,7 +587,7 @@ public class ShowPostService {
             titleSpan.text(dto.title);
             ulElem.appendChild(newLi);
         }
-        renderPagenation(context, doc, blogId, "list", page, postCount);
+        renderPagenation(doc, "list", page, postCount);
     }
 
     private static void renderCommentList(ServiceContext context, Document doc, String blogId, List<CommentDto> commentDtoList,
@@ -607,13 +608,12 @@ public class ShowPostService {
             posterSpan.text(dto.posterName);
             ulElem.appendChild(newLi);
         }
-        renderPagenation(context, doc, blogId, "commentlist", page, commentCount);
+        renderPagenation(doc, "commentlist", page, commentCount);
     }
 
-    private static void renderPagenation(ServiceContext context, Document doc, String blogId, String mode,
-                                         int page, int totalCount) {
+    private static void renderPagenation(Document doc, String mode, int page, int totalCount) {
         int[] pageCountBuf = new int[1];
-        int startPage = calcPagenationStart(totalCount, page, pageCountBuf);
+        int startPage = Util.calcPagenationStart(totalCount, page, Constants.NUM_OF_BLOG_TITLES_PER_PAGE, pageCountBuf);
         int pageCount = pageCountBuf[0];
 
         Element divElem = doc.getElementById("pagenation-area");
@@ -641,27 +641,5 @@ public class ShowPostService {
             nextA.text(" ≫");
             divElem.appendChild(nextA);
         }
-    }
-
-    // pageCountBuf[0]..ページ数
-    static int calcPagenationStart(int itemCount, int page, int[] pageCountBuf) {
-        int pageCount = (itemCount + Constants.NUM_OF_BLOG_TITLES_PER_PAGE - 1)
-                            / Constants.NUM_OF_BLOG_TITLES_PER_PAGE;
-        int adjustedPage = page;
-        if (page < 1) {
-            adjustedPage = 1;
-        } else if (page > pageCount) {
-            adjustedPage = pageCount;
-        }
-        int startIdx;
-        if (adjustedPage <= Constants.NUM_OF_PAGENATION / 2) {
-            startIdx = 1;
-        } else if (adjustedPage > (pageCount - Constants.NUM_OF_PAGENATION / 2)) {
-            startIdx = pageCount - Constants.NUM_OF_PAGENATION + 1;
-        } else {
-            startIdx = adjustedPage - (Constants.NUM_OF_PAGENATION / 2) + 1;
-        }
-        pageCountBuf[0] = pageCount;
-        return startIdx;
     }
 }

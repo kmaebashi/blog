@@ -21,6 +21,7 @@ public class SelectRoute {
     private static Pattern getOriginalSizeImagePattern = Pattern.compile("^(\\w+)/api/getorgsizeimage/(\\d+)/(\\d+)$");
     private static Pattern getProfileImagePattern = Pattern.compile("^(\\w+)/api/getprofileimage$");
     private static Pattern adminPattern = Pattern.compile("^(\\w+)/admin$");
+    private static Pattern adminListPattern = Pattern.compile("^(\\w+)/admin_list$");
     private static Pattern getPostCountEachDayPattern = Pattern.compile("^(\\w+)/api/getpostcounteachday$");
     private static Pattern postImagesPattern = Pattern.compile("^(\\w+)/api/postimages$");
     private static Pattern getImageAdminPattern = Pattern.compile("^(\\w+)/api/getimageadmin/(\\d+)$");
@@ -117,6 +118,11 @@ public class SelectRoute {
             if (matcher.matches()) {
                 params.put("blog_id", matcher.group(1));
                 return Route.ADMIN;
+            }
+            matcher = adminListPattern.matcher(path);
+            if (matcher.matches()) {
+                params.put("blog_id", matcher.group(1));
+                return Route.ADMIN_LIST;
             }
             matcher = getPostCountEachDayPattern.matcher(path);
             if (matcher.matches()) {

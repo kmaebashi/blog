@@ -1,6 +1,7 @@
 package com.kmaebashi.blog.service;
 
 import com.kmaebashi.blog.common.Constants;
+import com.kmaebashi.blog.util.Log;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -13,7 +14,8 @@ public class MarkupConverter {
         IN_H3,
         IN_LINE,
         IN_FOOTNOTE,
-        IN_LINK
+        IN_LINK,
+        IN_PRE
     }
 
     private enum ListType {
@@ -102,146 +104,172 @@ public class MarkupConverter {
     private boolean setBr = false;
     private StringBuilder targetSb;
     private ArrayList<StringBuilder> footnoteList = new ArrayList<>();
-    private boolean summaryMode;
+    private MarkupConverterMode summaryMode;
 
-    public MarkupConverter(boolean summaryMode) {
+    public MarkupConverter(MarkupConverterMode summaryMode) {
         this.summaryMode = summaryMode;
     }
 
     public String convert(String src) {
-        this.inParagraph = false;
-        this.setBr = false;
-        src = src.replace("\\r", "");
-        StringBuilder mainSb = new StringBuilder();
-        this.targetSb = mainSb;
-        StringBuilder currentFootnoteSb = new StringBuilder();
-        Stack<ListStack> listStack = new Stack<>();
+        try {
+            this.inParagraph = false;
+            this.setBr = false;
+            src = src.replace("\\r", "");
+            StringBuilder mainSb = new StringBuilder();
+            this.targetSb = mainSb;
+            StringBuilder currentFootnoteSb = new StringBuilder();
+            Stack<ListStack> listStack = new Stack<>();
 
-        Status status = Status.LINE_HEAD;
-        int[] markLenBuf = new int[1];
-        MarkDef md = null;
+            Status status = Status.LINE_HEAD;
+            int[] markLenBuf = new int[1];
+            MarkDef md = null;
 
-        for (int i = 0; i < src.length(); ) {
-            switch (status) {
-                case LINE_HEAD:
-                    md = checkMark(src, i, markLenBuf, true);
-                    if (md == null) {
-                        if (listStack.size() > 0) {
-                            subListLevel(listStack.size(), listStack);
-                        }
-                        startLine();
-                        status = Status.IN_LINE;
-                    } else if (md.type == Mark.H1 || md.type == Mark.H2 || md.type == Mark.H3) {
-                        endParagraph();
-                        writeTag(md.htmlStr);
-                        status = md.type == Mark.H1 ? Status.IN_H1
-                                : md.type == Mark.H2 ? Status.IN_H2
-                                : Status.IN_H3;
-                        i += markLenBuf[0];
-                    } else if (md.type == Mark.QUOTE_START || md.type == Mark.QUOTE_END
-                            || md.type == Mark.PRE_START || md.type == Mark.PRE_END) {
-                        endParagraph();
-                        writeTag(md.htmlStr + Constants.CRLF);
-                        i += markLenBuf[0];
-                    } else if (md.type == Mark.LI_UL1 || md.type == Mark.LI_UL2 || md.type == Mark.LI_UL3
-                            || md.type == Mark.LI_OL1 || md.type == Mark.LI_OL2 || md.type == Mark.LI_OL3) {
-                        endParagraph();
-                        if (md.liLevel == listStack.size() + 1) {
-                            // レベルが1増えた
-                            addListLevel(md, listStack);
-                            writeTag(md.htmlStr);
-                        } else if (md.liLevel == listStack.size()) {
-                            // レベル変わらず
-                            if (md.listType != listStack.peek().type) {
-                                subListLevel(1, listStack);
-                                addListLevel(md, listStack);
+            for (int i = 0; i < src.length(); ) {
+                switch (status) {
+                    case LINE_HEAD:
+                        md = checkMark(src, i, markLenBuf, true);
+                        if (md == null) {
+                            if (listStack.size() > 0) {
+                                subListLevel(listStack.size(), listStack);
                             }
+                            startLine();
+                            status = Status.IN_LINE;
+                        } else if (md.type == Mark.H1 || md.type == Mark.H2 || md.type == Mark.H3) {
+                            endParagraph();
                             writeTag(md.htmlStr);
-                        } else if (md.liLevel < listStack.size()) {
-                            subListLevel(listStack.size() - md.liLevel, listStack);
-                            writeTag(md.htmlStr);
+                            status = md.type == Mark.H1 ? Status.IN_H1
+                                    : md.type == Mark.H2 ? Status.IN_H2
+                                    : Status.IN_H3;
+                            i += markLenBuf[0];
+                        } else if (md.type == Mark.QUOTE_START || md.type == Mark.QUOTE_END) {
+                            endParagraph();
+                            writeTag(md.htmlStr + Constants.CRLF);
+                            i += markLenBuf[0];
+                        } else if (md.type == Mark.PRE_START) {
+                            endParagraph();
+                            writeTag(md.htmlStr + Constants.CRLF);
+                            i += markLenBuf[0];
+                            status = Status.IN_PRE;
+                        } else if (md.type == Mark.LI_UL1 || md.type == Mark.LI_UL2 || md.type == Mark.LI_UL3
+                                || md.type == Mark.LI_OL1 || md.type == Mark.LI_OL2 || md.type == Mark.LI_OL3) {
+                            endParagraph();
+                            if (md.liLevel == listStack.size() + 1) {
+                                // レベルが1増えた
+                                addListLevel(md, listStack);
+                                writeTag(md.htmlStr);
+                            } else if (md.liLevel == listStack.size()) {
+                                // レベル変わらず
+                                if (md.listType != listStack.peek().type) {
+                                    subListLevel(1, listStack);
+                                    addListLevel(md, listStack);
+                                }
+                                writeTag(md.htmlStr);
+                            } else if (md.liLevel < listStack.size()) {
+                                subListLevel(listStack.size() - md.liLevel, listStack);
+                                writeTag(md.htmlStr);
+                            } else {
+                                writeText("箇条書きの階層が不正です。");
+                                return mainSb.toString();
+                            }
+                            i += markLenBuf[0];
+                            status = Status.IN_LINE;
                         } else {
-                            writeText("箇条書きの階層が不正です。");
-                            return mainSb.toString();
+                            assert false : "md.type.." + md.type;
                         }
-                        i += markLenBuf[0];
-                        status = Status.IN_LINE;
-                    } else {
-                        assert false : "md.type.." + md.type;
-                    }
-                    break;
-                case IN_H1:
-                case IN_H2:
-                case IN_H3:
-                    if (src.charAt(i) == '\n') {
-                        String closeHtml = (status == Status.IN_H1 ? "</h2>"
-                                : status == Status.IN_H2 ? "</h3>"
-                                : "</h4>");
-                        writeTag(closeHtml);
-                        writeTag(Constants.CRLF);
-                        status = Status.LINE_HEAD;
-                    } else {
-                        writeText(Util.escapeHtmlChar(src.charAt(i)));
-                    }
-                    i++;
-                    break;
-                case IN_LINE:
-                case IN_FOOTNOTE:
-                    md = checkMark(src, i, markLenBuf, false);
-                    if (status == Status.IN_LINE && md != null && md.type == Mark.FOOTNOTE_START) {
-                        status = Status.IN_FOOTNOTE;
-                        i += markLenBuf[0];
-                        currentFootnoteSb = new StringBuilder();
-                        this.targetSb = currentFootnoteSb;
-                        status = Status.IN_FOOTNOTE;
-                    } else if (status == Status.IN_FOOTNOTE && md != null && md.type == Mark.FOOTNOTE_END) {
-                        footnoteList.add(currentFootnoteSb);
-                        currentFootnoteSb = null;
-                        this.targetSb = mainSb;
-                        outputFootnoteLink(footnoteList.size());
-                        i += markLenBuf[0];
-                        status = Status.IN_LINE;
-                    } else if (md != null && md.type == Mark.LINK_START) {
-                        int[] linkLenBuf = new int[1];
-                        String url = getLinkUrl(src, i, linkLenBuf);
-                        i += linkLenBuf[0];
-                        writeTag("<a href=\"" + url + "\">");
-                        writeText(Util.escapeHtml(url));
-                        writeTag("</a>");
-                    } else if (md != null && md.type == Mark.LINK_COM_START) {
-                        i++; // [の分
-                        int[] lenBuf = new int[1];
-                        String url = getLinkUrl(src, i, lenBuf);
-                        i += lenBuf[0];
-                        String title = getLinkTitle(src, i, lenBuf);
-                        i += lenBuf[0];
-                        writeTag("<a href=\"" + url + "\">");
-                        writeText(Util.escapeHtml(title != null ? title : url));
-                        writeTag("</a>");
-                    } else if (md != null && (md.type == Mark.B_START || md.type == Mark.B_END)) {
-                        writeTag(md.htmlStr);
-                        i += markLenBuf[0];
-                    } else {
+                        break;
+                    case IN_H1:
+                    case IN_H2:
+                    case IN_H3:
                         if (src.charAt(i) == '\n') {
-                            this.setBr = true;
-                            writeText(Constants.CRLF);
+                            String closeHtml = (status == Status.IN_H1 ? "</h2>"
+                                    : status == Status.IN_H2 ? "</h3>"
+                                    : "</h4>");
+                            writeTag(closeHtml);
+                            writeTag(Constants.CRLF);
                             status = Status.LINE_HEAD;
                         } else {
-                            writeText(Util.escapeHtmlChar(src.charAt(i)));
+                            writeText("" + src.charAt(i));
                         }
                         i++;
-                    }
-                    break;
-                default:
-                    assert false : "status.." + status;
+                        break;
+                    case IN_LINE:
+                    case IN_FOOTNOTE:
+                        md = checkMark(src, i, markLenBuf, false);
+                        if (status == Status.IN_LINE && md != null && md.type == Mark.FOOTNOTE_START) {
+                            status = Status.IN_FOOTNOTE;
+                            i += markLenBuf[0];
+                            currentFootnoteSb = new StringBuilder();
+                            this.targetSb = currentFootnoteSb;
+                            status = Status.IN_FOOTNOTE;
+                        } else if (status == Status.IN_FOOTNOTE && md != null && md.type == Mark.FOOTNOTE_END) {
+                            footnoteList.add(currentFootnoteSb);
+                            currentFootnoteSb = null;
+                            this.targetSb = mainSb;
+                            outputFootnoteLink(footnoteList.size());
+                            i += markLenBuf[0];
+                            status = Status.IN_LINE;
+                        } else if (md != null && md.type == Mark.LINK_START) {
+                            int[] linkLenBuf = new int[1];
+                            String url = getLinkUrl(src, i, linkLenBuf);
+                            i += linkLenBuf[0];
+                            writeTag("<a href=\"" + url + "\">");
+                            writeText(url);
+                            writeTag("</a>");
+                        } else if (md != null && md.type == Mark.LINK_COM_START) {
+                            i++; // [の分
+                            int[] lenBuf = new int[1];
+                            String url = getLinkUrl(src, i, lenBuf);
+                            i += lenBuf[0];
+                            String title = getLinkTitle(src, i, lenBuf);
+                            i += lenBuf[0];
+                            writeTag("<a href=\"" + url + "\">");
+                            writeText(title != null ? title : url);
+                            writeTag("</a>");
+                        } else if (md != null && (md.type == Mark.B_START || md.type == Mark.B_END)) {
+                            writeTag(md.htmlStr);
+                            i += markLenBuf[0];
+                        } else {
+                            if (src.charAt(i) == '\n') {
+                                this.setBr = true;
+                                if (status == Status.IN_FOOTNOTE) {
+                                    writeTag("<br>");
+                                } else {
+                                    status = Status.LINE_HEAD;
+                                }
+                                writeText(Constants.CRLF);
+                            } else {
+                                writeText("" + src.charAt(i));
+                            }
+                            i++;
+                        }
+                        break;
+                    case IN_PRE:
+                        md = checkMark(src, i, markLenBuf, true);
+                        if (md != null && md.type == Mark.PRE_END) {
+                            writeTag(md.htmlStr + Constants.CRLF);
+                            i += markLenBuf[0];
+                            status = Status.LINE_HEAD;
+                        } else if (src.charAt(i) == '\n') {
+                            writeText(Constants.CRLF);
+                            i++;
+                        } else {
+                            writeText("" + src.charAt(i));
+                            i++;
+                        }
+                        break;
+                    default:
+                        assert false : "status.." + status;
+                }
             }
+            endParagraph();
+            if (listStack.size() > 0) {
+                subListLevel(listStack.size(), listStack);
+            }
+            return mainSb.toString();
+        } catch (Exception ex) {
+            Log.error("MarkupConverter error. " + ex.toString());
+            return "マークアップで例外発生";
         }
-        endParagraph();
-        if (listStack.size() > 0) {
-            subListLevel(listStack.size(), listStack);
-        }
-
-        return mainSb.toString();
     }
 
     public String getFootnoteStr() {
@@ -262,11 +290,17 @@ public class MarkupConverter {
     }
 
     private void writeText(String str) {
-        this.targetSb.append(str);
+        String str2;
+        if (summaryMode != MarkupConverterMode.SUMMARY_TEXT) {
+            str2 = Util.escapeHtml(str);
+        } else {
+            str2 = str;
+        }
+        this.targetSb.append(str2);
     }
 
     private void writeTag(String str) {
-        if (!summaryMode) {
+        if (summaryMode == MarkupConverterMode.NORMAL) {
             this.targetSb.append(str);
         }
     }

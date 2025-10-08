@@ -156,6 +156,35 @@ input[type="radio"][name="og-image"]:checked:after {
   font-size: 30px;
 }
 
+div#container-title-list {
+  padding: 10px;
+  width: fit-content;
+}
+
+p.post-list-link {
+  text-align: right;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+table#article-list-table {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-collapse: collapse;
+}
+
+table#article-list-table th, table#article-list-table td {
+  border: solid 1px black;
+  padding: 3px;
+}
+table#article-list-table th {
+  background: whitesmoke;
+  text-align: left;
+}
+
 ul#article-lists {
   margin: 10px;
 }

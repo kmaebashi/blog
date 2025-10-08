@@ -1,5 +1,6 @@
 package com.kmaebashi.blog.service;
 
+import com.kmaebashi.blog.common.Constants;
 import com.kmaebashi.nctfw.DocumentResult;
 import org.jsoup.nodes.Element;
 import org.mindrot.jbcrypt.BCrypt;
@@ -68,5 +69,26 @@ public class Util {
 
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.length() == 0;
+    }
+
+    // pageCountBuf[0]..ページ数
+    static int calcPagenationStart(int itemCount, int page, int numOfPerPage, int[] pageCountBuf) {
+        int pageCount = (itemCount + numOfPerPage - 1) / numOfPerPage;
+        int adjustedPage = page;
+        if (page < 1) {
+            adjustedPage = 1;
+        } else if (page > pageCount) {
+            adjustedPage = pageCount;
+        }
+        int startIdx;
+        if (adjustedPage <= Constants.NUM_OF_PAGENATION / 2) {
+            startIdx = 1;
+        } else if (adjustedPage > (pageCount - Constants.NUM_OF_PAGENATION / 2)) {
+            startIdx = pageCount - Constants.NUM_OF_PAGENATION + 1;
+        } else {
+            startIdx = adjustedPage - (Constants.NUM_OF_PAGENATION / 2) + 1;
+        }
+        pageCountBuf[0] = pageCount;
+        return startIdx;
     }
 }

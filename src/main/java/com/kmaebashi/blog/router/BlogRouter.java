@@ -9,12 +9,7 @@ import java.util.HashMap;
 import java.util.ResourceBundle;
 
 import com.kmaebashi.blog.common.SessionKey;
-import com.kmaebashi.blog.controller.BlogListController;
-import com.kmaebashi.blog.controller.ImageController;
-import com.kmaebashi.blog.controller.LoginController;
-import com.kmaebashi.blog.controller.AdminController;
-import com.kmaebashi.blog.controller.RssController;
-import com.kmaebashi.blog.controller.ShowPostController;
+import com.kmaebashi.blog.controller.*;
 import com.kmaebashi.nctfw.BadRequestException;
 import com.kmaebashi.nctfw.ControllerInvoker;
 import com.kmaebashi.nctfw.RedirectResult;
@@ -139,6 +134,12 @@ public class BlogRouter extends Router {
                     return redirectToLoginPage(request, path);
                 } else {
                     result = AdminController.showPage(invoker, params, currentUserId);
+                }
+            } else if (route == Route.ADMIN_LIST) {
+                if (currentUserId == null) {
+                    return redirectToLoginPage(request, path);
+                } else {
+                    result = AdminListController.showPage(invoker, params, currentUserId);
                 }
             } else if (route == Route.GET_IMAGE_ADMIN && currentUserId != null) {
                 int photoId = (int)params.get("photo_id");
