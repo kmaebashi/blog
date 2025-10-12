@@ -2,6 +2,8 @@ package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.BlogTestUtil;
 import com.kmaebashi.blog.dto.BlogPostCountEachDayDto;
+import com.kmaebashi.blog.dto.BlogPostDto;
+import com.kmaebashi.blog.dto.BlogPostSearchDto;
 import com.kmaebashi.nctfw.DbAccessContext;
 import com.kmaebashi.nctfw.DbAccessInvoker;
 import com.kmaebashi.nctfwimpl.DbAccessContextImpl;
@@ -15,7 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BlogPostDbAccessTest {
     private static Connection conn;
@@ -62,5 +67,69 @@ class BlogPostDbAccessTest {
         LocalDate fromDate = LocalDate.parse("20240501", dateFormat);
         List<BlogPostCountEachDayDto> dtoList
                 = BlogPostDbAccess.getBlogPostCountByMonth(invoker, "kmaebashiblog", fromDate);
+    }
+
+    @Test
+    void searchBlogPostsByTitle001() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        List<String> keywordList = new ArrayList<>();
+        keywordList.add("煌蓮玖");
+        keywordList.add("翔禄");
+        List<BlogPostDto> dtoList
+                = BlogPostDbAccess.searchBlogPostsByTitle(invoker,"kmaebashiblog", keywordList);
+        assertEquals(1, dtoList.size());
+    }
+
+    @Test
+    void searchBlogPosts001() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        List<String> keywordList = new ArrayList<>();
+        keywordList.add("鳳斎瑠");
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true);
+        assertEquals(3, dtoList.size());
+    }
+
+    @Test
+    void searchBlogPosts002() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        List<String> keywordList = new ArrayList<>();
+        keywordList.add("鳳斎瑠");
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false);
+        assertEquals(2, dtoList.size());
+    }
+
+    @Test
+    void searchBlogPosts003() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        List<String> keywordList = new ArrayList<>();
+        keywordList.add("煌蓮玖");
+        keywordList.add("翔禄");
+
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true);
+        assertEquals(2, dtoList.size());
+    }
+
+    @Test
+    void searchBlogPosts004() {
+        DbAccessContext context = new DbAccessContextImpl(this.conn, this.logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(context);
+
+        List<String> keywordList = new ArrayList<>();
+        keywordList.add("煌蓮玖");
+        keywordList.add("翔禄");
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false);
+        assertEquals(2, dtoList.size());
     }
 }

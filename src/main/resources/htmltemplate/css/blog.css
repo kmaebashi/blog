@@ -271,7 +271,6 @@ p.sidebar-see-more {
   line-height: 1.5;
 }
 
-
 div.newer-older-area {
   display: flex;
   flex-direction: row;
@@ -330,8 +329,23 @@ p.commented-by {
   height: 200px;
 }
 
+#search-input {
+  border-width: 1px;
+  border-color: #000000;
+  width: 10em;
+}
+
+div.search-check-area input {
+  all: revert;
+}
+
 div#pagenation-area {
   text-align: center;
+}
+
+div.blog-search-item {
+  padding: 5px;
+  border-bottom: 1px solid #888888;
 }
 
 footer {

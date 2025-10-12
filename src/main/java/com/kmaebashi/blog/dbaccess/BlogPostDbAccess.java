@@ -1,12 +1,7 @@
 package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.common.BlogPostStatus;
-import com.kmaebashi.blog.dto.BlogPostCountEachDayDto;
-import com.kmaebashi.blog.dto.BlogPostDto;
-import com.kmaebashi.blog.dto.BlogPostSectionDto;
-import com.kmaebashi.blog.dto.BlogPostSummaryDto;
-import com.kmaebashi.blog.dto.PhotoDto;
-import com.kmaebashi.blog.dto.CommentDto;
+import com.kmaebashi.blog.dto.*;
 import com.kmaebashi.dbutil.NamedParameterPreparedStatement;
 import com.kmaebashi.dbutil.ResultSetMapper;
 import com.kmaebashi.nctfw.DbAccessInvoker;
@@ -658,4 +653,100 @@ public class BlogPostDbAccess {
         });
     }
 
+    public static List<BlogPostDto> searchBlogPostsByTitle(DbAccessInvoker invoker, String blogId, List<String> keywords) {
+        return invoker.invoke((context) -> {
+
+            String sql1 = """
+                    SELECT
+                      *
+                    FROM BLOG_POSTS
+                    WHERE
+                      BLOG_ID = :BLOG_ID
+                    """;
+            String sql2 = """
+                    ORDER BY
+                      POSTED_DATE DESC
+                    """;
+
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            for (int i = 0; i < keywords.size(); i++) {
+                params.put("KEYWORD" + i, "%" + keywords.get(i) + "%");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < keywords.size(); i++) {
+                sb.append("AND ");
+                sb.append("TITLE LIKE :KEYWORD" + i + " ");
+            }
+
+            String sql = sql1 + sb + sql2;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<BlogPostDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostDto.class);
+
+            return dtoList;
+        });
+    }
+
+    public static List<BlogPostSearchDto> searchBlogPosts(DbAccessInvoker invoker, String blogId,
+                                                          List<String> keywords, boolean titleSearch) {
+        return invoker.invoke((context) -> {
+            String sql1 = """
+                    SELECT
+                      BP.BLOG_POST_ID,
+                      BP.TITLE,
+                      BP.POSTED_DATE,
+                      SEC.BODY
+                    FROM BLOG_POSTS BP
+                    LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
+                      ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
+                    WHERE
+                      BP.BLOG_ID = :BLOG_ID
+                      """;
+            String sql2 = """
+                    ORDER BY
+                      BP.POSTED_DATE DESC, SEC.SECTION_SEQ
+                    """;
+
+            var params = new HashMap<String, Object>();
+            params.put("BLOG_ID", blogId);
+            for (int i = 0; i < keywords.size(); i++) {
+                params.put("KEYWORD" + i, "%" + keywords.get(i) + "%");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("AND ");
+            if (titleSearch) {
+                sb.append("(");
+                for (int i = 0; i < keywords.size(); i++) {
+                    if (i > 0) {
+                        sb.append("AND ");
+                    }
+                    sb.append("BP.TITLE LIKE :KEYWORD" + i + " ");
+                }
+                sb.append(") OR (");
+            }
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sb.append("AND ");
+                }
+                sb.append("SEC.BODY LIKE :KEYWORD" + i + " ");
+            }
+            if (titleSearch) {
+                sb.append(")");
+            }
+
+            String sql = sql1 + sb + sql2;
+            NamedParameterPreparedStatement npps
+                    = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
+            npps.setParameters(params);
+            ResultSet rs = npps.getPreparedStatement().executeQuery();
+            List<BlogPostSearchDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostSearchDto.class);
+
+            return dtoList;
+        });
+    }
 }
