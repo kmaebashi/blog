@@ -8,6 +8,7 @@ public enum Route {
     SHOW_POST,
     TITLE_LIST,
     COMMENT_LIST,
+    SEARCH_LIST,
     PREVIEW_POST,
     GET_IMAGE,
     GET_ORIGINAL_SIZE_IMAGE,

@@ -16,6 +16,7 @@ public class SelectRoute {
     private static Pattern postPattern = Pattern.compile("^(\\w+)/post/(\\d+)$");
     private static Pattern titleListPattern = Pattern.compile("^(\\w+)/list$");
     private static Pattern commentListPattern = Pattern.compile("^(\\w+)/commentlist$");
+    private static Pattern searchListPattern = Pattern.compile("^(\\w+)/searchlist$");
     private static Pattern previewPostPattern = Pattern.compile("^(\\w+)/previewpost/(\\d+)$");
     private static Pattern getImagePattern = Pattern.compile("^(\\w+)/api/getimage/(\\d+)/(\\d+)$");
     private static Pattern getOriginalSizeImagePattern = Pattern.compile("^(\\w+)/api/getorgsizeimage/(\\d+)/(\\d+)$");
@@ -75,6 +76,11 @@ public class SelectRoute {
             if (matcher.matches()) {
                 params.put("blog_id", matcher.group(1));
                 return Route.COMMENT_LIST;
+            }
+            matcher = searchListPattern.matcher(path);
+            if (matcher.matches()) {
+                params.put("blog_id", matcher.group(1));
+                return Route.SEARCH_LIST;
             }
             matcher = previewPostPattern.matcher(path);
             if (matcher.matches()) {

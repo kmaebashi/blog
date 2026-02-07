@@ -6,7 +6,7 @@ copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\bl
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\blogid\date\*.html C:\Tomcat10\webapps\blog\WEB-INF\htmltemplate\blogid\date\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\blogid\title_list\*.html C:\Tomcat10\webapps\blog\WEB-INF\htmltemplate\blogid\title_list\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\blogid\comment_list\*.html C:\Tomcat10\webapps\blog\WEB-INF\htmltemplate\blogid\comment_list\
+copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\blogid\search_list\*.html C:\Tomcat10\webapps\blog\WEB-INF\htmltemplate\blogid\search_list\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\css\*.css C:\Tomcat10\webapps\blog\css\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\img\*.* C:\Tomcat10\webapps\blog\img\
 copy /y C:\maebashi\develop\IdeaProjects\Blog\src\main\resources\htmltemplate\js\*.js C:\Tomcat10\webapps\blog\js\
-rem copy /y C:\maebashi\develop\IdeaProjects\Blog\properties\application.properties_local C:\Tomcat10\webapps\ykameibo\WEB-INF\classes\application.properties

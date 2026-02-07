@@ -24,6 +24,8 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -162,6 +164,81 @@ class ShowPostServiceTest {
     }
 
     @Test
+    void showSearchListTest001() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        List<String> keywords = new ArrayList<>();
+        keywords.add("鰯禄勾讐麓戚黴槌嶽"); // 絶対にヒットしない文字列で検索
+        DocumentResult dr = ShowPostService.showSearchList(si, "kmaebashiblog", 1, keywords, true, false);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showSearchListTest002() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        List<String> keywords = new ArrayList<>();
+        keywords.add("鳳斎瑠");
+        DocumentResult dr = ShowPostService.showSearchList(si, "kmaebashiblog", 1, keywords, true, false);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void showSearchListTest003() {
+        DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
+        DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
+        ServiceContext sc = new ServiceContextImpl(invoker,
+                Paths.get("./src/main/resources/htmltemplate"),
+                logger);
+        ServiceInvoker si = new ServiceInvokerImpl(sc);
+        List<String> keywords = new ArrayList<>();
+        keywords.add("㐀㑳㒼㓾㔿㕣");
+        DocumentResult dr = ShowPostService.showSearchList(si, "kmaebashiblog", 1, keywords, true, true);
+        String html = dr.getDocument().html();
+    }
+
+    @Test
+    void getSearchStringTest001() throws Exception {
+        List<String> keywords = new ArrayList<>();
+
+        keywords.add("なんとか");
+        keywords.add("かんとか");
+
+        String ret = ShowPostService.getSearchString(keywords, true, false);
+        assertEquals("&q=%E3%81%AA%E3%82%93%E3%81%A8%E3%81%8B+%E3%81%8B%E3%82%93%E3%81%A8%E3%81%8B&mode=title", ret);
+    }
+
+    @Test
+    void getSearchStringTest002() throws Exception {
+        List<String> keywords = new ArrayList<>();
+
+        keywords.add("abc");
+        keywords.add("def");
+
+        String ret = ShowPostService.getSearchString(keywords, false, true);
+        assertEquals("&q=abc+def&mode=content", ret);
+    }
+
+    @Test
+    void getSearchStringTest003() throws Exception {
+        List<String> keywords = new ArrayList<>();
+
+        keywords.add("a&bc");
+        keywords.add("def");
+
+        String ret = ShowPostService.getSearchString(keywords, true, true);
+        assertEquals("&q=a%26bc+def&mode=both", ret);
+    }
+
+    @Test
     void getPostCountEachDayTest001() {
         DbAccessContext dc = new DbAccessContextImpl(this.conn, logger);
         DbAccessInvoker invoker = new DbAccessInvokerImpl(dc);
@@ -189,5 +266,4 @@ class ShowPostServiceTest {
         data.message = "なんとかかんとか";
         JsonResult result = CommentService.postComment(si, null, "kmaebashiblog", data);
     }
-
 }

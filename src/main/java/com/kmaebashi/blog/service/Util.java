@@ -5,7 +5,8 @@ import com.kmaebashi.nctfw.DocumentResult;
 import org.jsoup.nodes.Element;
 import org.mindrot.jbcrypt.BCrypt;
 import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.*;
+
 import org.jsoup.nodes.Document;
 
 public class Util {
@@ -90,5 +91,49 @@ public class Util {
         }
         pageCountBuf[0] = pageCount;
         return startIdx;
+    }
+
+    public static List<String> splitQueryKeywords(String src) {
+        List<String> keywords = Arrays.asList(src.replaceAll("^[ 　]+|[ 　]+$", "")
+                                              .split("[ 　]+"));
+        return keywords;
+    }
+
+    public static String boldifyHitString(String src, List<String> keywords) {
+        final String BOLD_START = "[錦禍斑慟冥翠骸雹燭鵬]";
+        final String BOLD_END = "[/錦禍斑慟冥翠骸雹燭鵬]";
+
+        List<String> sortedKeywords = new ArrayList();
+        sortedKeywords.addAll(keywords);
+        sortedKeywords.sort(Comparator.comparingInt(String::length).reversed());
+
+        String boldify = src;
+        for (String keyword : sortedKeywords) {
+            boldify = boldify.replace(keyword, BOLD_START + keyword + BOLD_END);
+        }
+        String htmlEscaped = escapeHtml(boldify);
+        String boldTagged = htmlEscaped.replace(BOLD_START, "<b>").replace(BOLD_END, "</b>");
+
+        return nl2Br(boldTagged);
+    }
+
+    public static String getKeywordNeighborhood(String src, List<String> keywords) {
+        int firstKeywordIndex = Integer.MAX_VALUE;
+        for (String keyword : keywords) {
+            int idx = src.indexOf(keyword);
+            if (idx < firstKeywordIndex && idx >= 0) {
+                firstKeywordIndex = idx;
+            }
+        }
+        if (firstKeywordIndex == Integer.MAX_VALUE) {
+            return src.substring(0, Math.min(Constants.SEARCH_CONTENT_LENGTH, src.length()));
+        }
+        int startIndex;
+        if (src.length() < Constants.SEARCH_CONTENT_LENGTH) {
+            startIndex = 0;
+        } else {
+            startIndex = Math.max(firstKeywordIndex - Constants.BEFORE_SEARCH_KEYWORD_LENGTH, 0);
+        }
+        return src.substring(startIndex, Math.min(startIndex + Constants.SEARCH_CONTENT_LENGTH, src.length()));
     }
 }

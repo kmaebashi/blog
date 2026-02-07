@@ -466,7 +466,7 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static BlogPostDto getOlderBlogPost(DbAccessInvoker invoker, String blogId, int blogPostId) {
+    public static BlogPostDto getOlderBlogPost(DbAccessInvoker invoker, String blogId, LocalDateTime postedDate) {
         return invoker.invoke((context) -> {
             String sql = """
                     SELECT
@@ -475,7 +475,7 @@ public class BlogPostDbAccess {
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
-                      AND BLOG_POST_ID < :BLOG_POST_ID
+                      AND POSTED_DATE < :POSTED_DATE
                       AND STATUS = 2
                     ORDER BY BLOG_POST_ID DESC
                     LIMIT 1
@@ -484,7 +484,7 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("BLOG_ID", blogId);
-            params.put("BLOG_POST_ID", blogPostId);
+            params.put("POSTED_DATE", postedDate);
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
             BlogPostDto blogPostDto = ResultSetMapper.toDto(rs, BlogPostDto.class);
@@ -493,7 +493,7 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static BlogPostDto getNewerBlogPost(DbAccessInvoker invoker, String blogId, int blogPostId) {
+    public static BlogPostDto getNewerBlogPost(DbAccessInvoker invoker, String blogId, LocalDateTime postedDate) {
         return invoker.invoke((context) -> {
             String sql = """
                     SELECT
@@ -502,7 +502,7 @@ public class BlogPostDbAccess {
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
-                      AND BLOG_POST_ID > :BLOG_POST_ID
+                      AND POSTED_DATE > :POSTED_DATE
                       AND STATUS = 2
                     ORDER BY BLOG_POST_ID ASC
                     LIMIT 1
@@ -511,7 +511,7 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             var params = new HashMap<String, Object>();
             params.put("BLOG_ID", blogId);
-            params.put("BLOG_POST_ID", blogPostId);
+            params.put("POSTED_DATE", postedDate);
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
             BlogPostDto blogPostDto = ResultSetMapper.toDto(rs, BlogPostDto.class);
@@ -653,12 +653,14 @@ public class BlogPostDbAccess {
         });
     }
 
-    public static List<BlogPostDto> searchBlogPostsByTitle(DbAccessInvoker invoker, String blogId, List<String> keywords) {
+    public static List<BlogPostSearchDto> searchBlogPostsByTitle(DbAccessInvoker invoker, String blogId, List<String> keywords,
+                                                                 int offset, int limit) {
         return invoker.invoke((context) -> {
 
             String sql1 = """
                     SELECT
-                      *
+                      *,
+                      COUNT(*) OVER() AS TOTAL_COUNT
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
@@ -666,6 +668,7 @@ public class BlogPostDbAccess {
             String sql2 = """
                     ORDER BY
                       POSTED_DATE DESC
+                    OFFSET :OFFSET LIMIT :LIMIT
                     """;
 
             var params = new HashMap<String, Object>();
@@ -673,6 +676,8 @@ public class BlogPostDbAccess {
             for (int i = 0; i < keywords.size(); i++) {
                 params.put("KEYWORD" + i, "%" + keywords.get(i) + "%");
             }
+            params.put("OFFSET", offset);
+            params.put("LIMIT", limit);
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < keywords.size(); i++) {
@@ -685,30 +690,40 @@ public class BlogPostDbAccess {
                     = NamedParameterPreparedStatement.newInstance(context.getConnection(), sql);
             npps.setParameters(params);
             ResultSet rs = npps.getPreparedStatement().executeQuery();
-            List<BlogPostDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostDto.class);
+            List<BlogPostSearchDto> dtoList = ResultSetMapper.toDtoList(rs, BlogPostSearchDto.class);
 
             return dtoList;
         });
     }
 
     public static List<BlogPostSearchDto> searchBlogPosts(DbAccessInvoker invoker, String blogId,
-                                                          List<String> keywords, boolean titleSearch) {
+                                                          List<String> keywords, boolean titleSearch, int offset, int limit) {
         return invoker.invoke((context) -> {
             String sql1 = """
                     SELECT
-                      BP.BLOG_POST_ID,
-                      BP.TITLE,
-                      BP.POSTED_DATE,
-                      SEC.BODY
-                    FROM BLOG_POSTS BP
-                    LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
-                      ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
+                      BLOG_POST_ID,
+                      TITLE,
+                      POSTED_DATE,
+                      BODY_CONCAT,
+                      COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM  (SELECT
+                          BP.BLOG_POST_ID,
+                          BP.TITLE,
+                          BP.POSTED_DATE,
+                          ARRAY_TO_STRING(ARRAY_AGG("body" ORDER BY "section_seq"), '／') AS BODY_CONCAT
+                        FROM BLOG_POSTS BP
+                        LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
+                          ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
+                        WHERE
+                          BP.BLOG_ID = :BLOG_ID
+                        GROUP BY (BP.BLOG_POST_ID, BP.TITLE, BP.POSTED_DATE)
+                      ) CONCAT
                     WHERE
-                      BP.BLOG_ID = :BLOG_ID
-                      """;
+                    """;
             String sql2 = """
                     ORDER BY
-                      BP.POSTED_DATE DESC, SEC.SECTION_SEQ
+                      POSTED_DATE DESC
+                    OFFSET :OFFSET LIMIT :LIMIT
                     """;
 
             var params = new HashMap<String, Object>();
@@ -716,16 +731,17 @@ public class BlogPostDbAccess {
             for (int i = 0; i < keywords.size(); i++) {
                 params.put("KEYWORD" + i, "%" + keywords.get(i) + "%");
             }
+            params.put("OFFSET", offset);
+            params.put("LIMIT", limit);
 
             StringBuilder sb = new StringBuilder();
-            sb.append("AND ");
             if (titleSearch) {
                 sb.append("(");
                 for (int i = 0; i < keywords.size(); i++) {
                     if (i > 0) {
                         sb.append("AND ");
                     }
-                    sb.append("BP.TITLE LIKE :KEYWORD" + i + " ");
+                    sb.append("TITLE LIKE :KEYWORD" + i + " ");
                 }
                 sb.append(") OR (");
             }
@@ -733,7 +749,7 @@ public class BlogPostDbAccess {
                 if (i > 0) {
                     sb.append("AND ");
                 }
-                sb.append("SEC.BODY LIKE :KEYWORD" + i + " ");
+                sb.append("BODY_CONCAT LIKE :KEYWORD" + i + " ");
             }
             if (titleSearch) {
                 sb.append(")");

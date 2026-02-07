@@ -14,6 +14,9 @@ public class BlogPostSearchDto {
     @TableColumn("POSTED_DATE")
     public LocalDateTime postedDate;
 
-    @TableColumn("BODY")
-    public String body;
+    @TableColumn("BODY_CONCAT")
+    public String bodyConcat;
+
+    @TableColumn("TOTAL_COUNT")
+    public int totalCount;
 }

@@ -78,6 +78,12 @@ header section a.blog-title {
     background-color: #d5e0f1;
     width: 220px;
   }
+
+  footer section {
+    width: 1020px;
+    margin: auto;
+    padding: 6px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -105,8 +111,19 @@ header section a.blog-title {
   p.photo img {
     max-width: 100%;
   }
+
+  footer section {
+    width: 100%;
+    margin: auto;
+    padding: 6px;
+  }
 }
 
+p.sidebar-search-title {
+  margin: 0.2em auto;
+  font-weight: bold;
+  font-size: 16px;
+}
 
 p.sidebar-title {
   margin: 0.2em auto;
@@ -164,6 +181,12 @@ p.sidebar-see-more {
   text-align: center;
 }
 
+#sidebar-search-area {
+  margin: 5px 0px 0px 0px;
+  padding: 5px;
+  background-color: #ffffff;
+}
+
 #recent-posts-area {
   margin: 5px 0px 0px 0px;
   padding: 5px;
@@ -204,22 +227,22 @@ p.sidebar-see-more {
   font-size: 22px;
 }
 
-#container-main h2 {
+.blog-post-body h2 {
   font-weight: bold;
   font-size: 19px;
 }
 
-#container-main h3 {
+.blog-post-body h3 {
   font-weight: bold;
   font-size: 17px;
 }
 
-#container-main h4 {
+.blog-post-body h4 {
   font-weight: bold;
   font-size: 16px;
 }
 
-#container-main blockquote {
+.blog-post-body blockquote {
   position:relative;
   margin: 5px;
   border-left: 3px solid #83a0ce;
@@ -227,7 +250,7 @@ p.sidebar-see-more {
   background-color: #f4f7fb;
 }
 
-#container-main blockquote:before {
+.blog-post-body blockquote:before {
   position: absolute;
   content: '“';
   font-size: 30px;
@@ -236,7 +259,7 @@ p.sidebar-see-more {
   left: 5px;
 }
 
-#container-main blockquote:after{
+.blog-post-body blockquote:after{
   position:absolute;
   content:'”';
   font-size: 30px;
@@ -245,15 +268,15 @@ p.sidebar-see-more {
   bottom: 0px;
 }
 
-#container-main ul {
+.blog-post-body ul {
   all: revert;
   padding-left: 20px;
 }
-#container-main ol {
+.blog-post-body ol {
   all: revert;
   padding-left: 20px;
 }
-#container-main li {
+.blog-post-body li {
   all: revert;
 }
 
@@ -329,7 +352,7 @@ p.commented-by {
   height: 200px;
 }
 
-#search-input {
+input.search-input {
   border-width: 1px;
   border-color: #000000;
   width: 10em;
@@ -345,7 +368,18 @@ div#pagenation-area {
 
 div.blog-search-item {
   padding: 5px;
-  border-bottom: 1px solid #888888;
+}
+
+ul.footnote {
+  list-style-type: disc;
+  padding-inline-start: 40px;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  font-size: small;
+}
+
+ul.footnote li {
+  display: list-item;
 }
 
 footer {
@@ -355,11 +389,6 @@ footer {
   background-color: #3261ab;
 }
 
-footer section {
-  width: 1020px;
-  margin: auto;
-  padding: 6px;
-}
 
 td.calendar-left-arrow {
   cursor: pointer;

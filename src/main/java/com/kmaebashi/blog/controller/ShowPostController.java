@@ -4,6 +4,7 @@ import com.kmaebashi.blog.common.SessionKey;
 import com.kmaebashi.blog.controller.data.CommentData;
 import com.kmaebashi.blog.service.CommentService;
 import com.kmaebashi.blog.service.ShowPostService;
+import com.kmaebashi.blog.service.Util;
 import com.kmaebashi.blog.util.CsrfUtil;
 import com.kmaebashi.jsonparser.ClassMapper;
 import com.kmaebashi.jsonparser.JsonElement;
@@ -18,6 +19,8 @@ import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.List;
 
 public class ShowPostController {
     private ShowPostController() {}
@@ -151,6 +154,45 @@ public class ShowPostController {
             }
             DocumentResult result
                     = ShowPostService.showCommentList(context.getServiceInvoker(), blogId, page);
+
+            return result;
+        });
+    }
+
+    public static RoutingResult showSearchList(ControllerInvoker invoker, String blogId) {
+        return invoker.invoke((context) -> {
+            int page = 1;
+            String pageStr = context.getServletRequest().getParameter("page");
+            if (pageStr != null) {
+                try {
+                    page = Integer.valueOf(Integer.parseInt(pageStr));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestException("ページ番号が不正です(" + pageStr + ")");
+                }
+            }
+            String keywordsOrg = context.getServletRequest().getParameter("q");
+            List<String> keywords = Util.splitQueryKeywords(keywordsOrg);
+            if (keywords.size() == 0) {
+                throw new BadRequestException("検索キーワードがありません。");
+            }
+            String modeStr = context.getServletRequest().getParameter("mode");
+            boolean titleSearch;
+            boolean contentSearch;
+            if ("both".equals(modeStr)) {
+                titleSearch = contentSearch = true;
+            } else if ("title".equals(modeStr)) {
+                titleSearch = true;
+                contentSearch = false;
+            } else if ("content".equals(modeStr)) {
+                titleSearch = false;
+                contentSearch = true;
+            } else {
+                titleSearch = contentSearch = true;
+            }
+
+            DocumentResult result
+                    = ShowPostService.showSearchList(context.getServiceInvoker(), blogId, page,
+                                                     keywords, titleSearch, contentSearch);
 
             return result;
         });

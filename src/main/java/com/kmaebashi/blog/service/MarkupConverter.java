@@ -279,7 +279,7 @@ public class MarkupConverter {
             sb.append(Constants.CRLF + "<hr>" + Constants.CRLF);
             sb.append("<ul class=\"footnote\">" + Constants.CRLF);
             for (int i = 0; i < footnoteList.size(); i++) {
-                sb.append("<li><a name=\"footnote" + (i + 1) + "\">※" + (i + 1) + "</a>"
+                sb.append("<li><a name=\"footnote" + (i + 1) + "\">※" + (i + 1) + "</a> "
                         + footnoteList.get(i).toString() + Constants.CRLF);
             }
             sb.append("</ul>" + Constants.CRLF);

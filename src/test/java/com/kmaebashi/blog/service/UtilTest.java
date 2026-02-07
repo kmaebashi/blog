@@ -2,6 +2,9 @@ package com.kmaebashi.blog.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UtilTest {
@@ -102,4 +105,105 @@ class UtilTest {
         assertEquals(11, dispPageCountBuf[0]);
     }
 
+    @Test
+    void splitQueryKeywordsTest001() {
+        List<String> ret = Util.splitQueryKeywords("あいうえお かきくけこ");
+        assertEquals("あいうえお", ret.get(0));
+        assertEquals("かきくけこ", ret.get(1));
+    }
+
+    @Test
+    void splitQueryKeywordsTest002() {
+        List<String> ret = Util.splitQueryKeywords(" あいうえお 　かきくけこ　");
+        assertEquals("あいうえお", ret.get(0));
+        assertEquals("かきくけこ", ret.get(1));
+    }
+
+    @Test
+    void boldifyHitStringTest001() {
+        String src = "奇妙奇天烈摩訶不思議奇想天外四捨五入出前迅速落書無用";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("奇");
+        String ret = Util.boldifyHitString(src, keywords);
+        assertEquals("<b>奇</b>妙<b>奇</b>天烈摩訶不思議<b>奇</b>想天外四捨五入出前迅速落書無用", ret);
+    }
+
+    @Test
+    void boldifyHitStringTest002() {
+        String src = "奇妙奇天烈摩訶不思議奇想天外四捨五入出前迅速落書無用";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("奇");
+        keywords.add("奇妙");
+        String ret = Util.boldifyHitString(src, keywords);
+        assertEquals("<b><b>奇</b>妙</b><b>奇</b>天烈摩訶不思議<b>奇</b>想天外四捨五入出前迅速落書無用", ret);
+    }
+
+    @Test
+    void boldifyHitStringTest003() {
+        String src = "奇妙奇天烈<b>摩訶不思議</b>奇想天外四捨五入出前迅速落書無用";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("<");
+        keywords.add(">");
+        String ret = Util.boldifyHitString(src, keywords);
+        assertEquals("奇妙奇天烈<b>&lt;</b>b<b>&gt;</b>摩訶不思議<b>&lt;</b>/b<b>&gt;</b>奇想天外四捨五入出前迅速落書無用", ret);
+    }
+
+    @Test
+    void boldifyHitStringTest004() {
+        String src = "奇妙奇天烈摩訶不思議\r\n奇想天外四捨五入出前迅速落書無用";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("<");
+        keywords.add(">");
+        String ret = Util.boldifyHitString(src, keywords);
+        assertEquals("奇妙奇天烈摩訶不思議<br>奇想天外四捨五入出前迅速落書無用", ret);
+    }
+
+    @Test
+    void getKeywordNeighborhoodTest001() {
+        String src = "一二三四五六七八九〇一二三四五六七キーワード1八九〇一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇"
+                + "一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇キーワード2一二三四五六七八九〇一二三四五六七八九〇";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("キーワード1");
+        keywords.add("キーワード2");
+
+        String ret = Util.getKeywordNeighborhood(src, keywords);
+        assertEquals(100, ret.length());
+        assertTrue(ret.startsWith("八九〇一二三"));
+    }
+
+    @Test
+    void getKeywordNeighborhoodTest002() {
+        String src = "一二三四五六七八九〇一二三四五六七キーワード1八九〇";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("キーワード1");
+
+        String ret = Util.getKeywordNeighborhood(src, keywords);
+        assertEquals(26, ret.length());
+        assertTrue(ret.startsWith("一二三四五六七八九〇"));
+    }
+
+    @Test
+    void getKeywordNeighborhoodTest003() {
+        String src = "一二三四五六七八九〇一二三四五六七キーワード1八九〇一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇"
+                + "一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇キーワード2一二三四五六七八九〇一二三四五六七八九〇";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("存在しない");
+
+        String ret = Util.getKeywordNeighborhood(src, keywords);
+        assertEquals(100, ret.length());
+        assertTrue(src.startsWith(ret));
+    }
+
+    @Test
+    void getKeywordNeighborhoodTest004() {
+        String src = "一二三四五六七八九〇一二三四五六七キーワード1八九〇一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇"
+                + "一二三四五六七八九〇一二三四五六七八九〇一二三四五六七八九〇キーワード2一二三四五六七八九〇一二三四五六七八九〇";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("キーワード2");
+        keywords.add("存在しない");
+
+        String ret = Util.getKeywordNeighborhood(src, keywords);
+        assertEquals(36, ret.length());
+        assertTrue(ret.startsWith("一二三四五六七八九〇キーワード2"));
+    }
 }

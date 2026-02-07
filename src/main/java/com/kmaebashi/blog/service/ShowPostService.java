@@ -6,26 +6,16 @@ import com.kmaebashi.blog.dbaccess.BlogDbAccess;
 import com.kmaebashi.blog.dbaccess.ProfileDbAccess;
 import com.kmaebashi.blog.common.BlogPostStatus;
 import com.kmaebashi.blog.dbaccess.BlogPostDbAccess;
-import com.kmaebashi.blog.dto.BlogPostCountEachDayDto;
-import com.kmaebashi.blog.dto.BlogPostDto;
-import com.kmaebashi.blog.dto.BlogPostSummaryDto;
-import com.kmaebashi.blog.dto.BlogPostSectionDto;
-import com.kmaebashi.blog.dto.BlogProfileDto;
-import com.kmaebashi.blog.dto.CommentDto;
-import com.kmaebashi.blog.dto.PhotoDto;
-import com.kmaebashi.blog.dto.ProfileDto;
+import com.kmaebashi.blog.dto.*;
 import com.kmaebashi.jsonparser.ClassMapper;
-import com.kmaebashi.nctfw.BadRequestException;
-import com.kmaebashi.nctfw.DocumentResult;
-import com.kmaebashi.nctfw.JsonResult;
-import com.kmaebashi.nctfw.NotFoundException;
-import com.kmaebashi.nctfw.ServiceInvoker;
-import com.kmaebashi.nctfw.ServiceContext;
+import com.kmaebashi.nctfw.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -66,10 +56,14 @@ public class ShowPostService {
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.POST);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.POST);
             ShowPostService.renderBlogPost(context, doc, blogId, blogPostDto, url);
-            ShowPostService.renderOlderNewerLink(context, doc, blogId, blogPostId);
+            ShowPostService.renderOlderNewerLink(context, doc, blogId, blogPostDto);
             ShowPostService.renderCommentArea(context, doc, blogPostId, currentUserId);
-            ShowPostService.renderForFacebook(doc, url);
-
+            if (isPreview) {
+                Element snsAreaElem = doc.getElementById("sns-area");
+                snsAreaElem.remove();
+            } else {
+                ShowPostService.renderForFacebook(doc, url);
+            }
             return new DocumentResult(doc);
         });
     }
@@ -146,7 +140,7 @@ public class ShowPostService {
             ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
-            ShowPostService.renderTitleList(context, doc, blogId, blogPostDtoList, page, postCount);
+            ShowPostService.renderTitleList(doc, blogId, blogPostDtoList, page, postCount);
 
             return new DocumentResult(doc);
         });
@@ -172,11 +166,41 @@ public class ShowPostService {
             ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
             ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
             ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
-            ShowPostService.renderCommentList(context, doc, blogId, commentDtoList, page, commentCount);
+            ShowPostService.renderCommentList(doc, blogId, commentDtoList, page, commentCount);
 
             return new DocumentResult(doc);
         });
     }
+
+    public static DocumentResult showSearchList(ServiceInvoker invoker, String blogId, int page,
+                                                List<String> keywords, boolean titleSearch, boolean contentSearch) {
+        return invoker.invoke((context) -> {
+            BlogProfileDto blogDto = BlogDbAccess.getBlogAndProfile(context.getDbAccessInvoker(), blogId);
+            if (blogDto == null) {
+                throw new BadRequestException("ブログ" + blogId + "はありません。");
+            }
+            Path htmlPath = context.getHtmlTemplateDirectory().resolve("blogid/search_list/search_list.html");
+            Document doc = Jsoup.parse(htmlPath.toFile(), "UTF-8");
+            ShowPostService.setProperties(doc, PathLevel.DATE, LocalDate.now());
+            replacePathForBlogList(doc, false);
+            ShowPostService.renderHeadTitleTop(doc, blogDto, page);
+            ShowPostService.renderBlogTitle(doc, blogDto, PathLevel.DATE);
+            ShowPostService.renderProfile(doc, blogId, blogDto, PathLevel.DATE);
+            ShowPostService.renderRecentPosts(context, doc, blogId, PathLevel.DATE);
+            ShowPostService.renderRecentComments(context, doc, blogId, PathLevel.DATE);
+            renderSearchCondition(doc, keywords, titleSearch, contentSearch);
+            if (titleSearch && !contentSearch) {
+                ShowPostService.renderSearchTitleList(context, doc, blogId, keywords, page);
+            } else if (contentSearch) {
+                ShowPostService.renderSearchList(context, doc, blogId, keywords, page, titleSearch);
+            } else {
+                throw new InternalException("titleSearch.." + titleSearch + ", contentSearch.." + contentSearch);
+            }
+
+            return new DocumentResult(doc);
+        });
+    }
+
 
     public static JsonResult getPostCountEachDay(ServiceInvoker invoker, String blogId, LocalDate month) {
         return invoker.invoke((context) -> {
@@ -370,7 +394,7 @@ public class ShowPostService {
         if (footnoteHtml != null) {
             Element footnoteDivElem = doc.createElement("div");
             footnoteDivElem.html(footnoteHtml);
-            postBodyElem.appendChild(footnoteDivElem);
+            postBodyElem.after(footnoteDivElem);
         }
     }
 
@@ -487,12 +511,12 @@ public class ShowPostService {
         return cutText;
     }
 
-    private static void renderOlderNewerLink(ServiceContext context, Document doc, String blogId, int blogPostId)
+    private static void renderOlderNewerLink(ServiceContext context, Document doc, String blogId, BlogPostDto blogPostDto)
     {
         BlogPostDto olderPostDto
-                = BlogPostDbAccess.getOlderBlogPost(context.getDbAccessInvoker(), blogId, blogPostId);
+                = BlogPostDbAccess.getOlderBlogPost(context.getDbAccessInvoker(), blogId, blogPostDto.postedDate);
         BlogPostDto newerPostDto
-                = BlogPostDbAccess.getNewerBlogPost(context.getDbAccessInvoker(), blogId, blogPostId);
+                = BlogPostDbAccess.getNewerBlogPost(context.getDbAccessInvoker(), blogId, blogPostDto.postedDate);
         Element[] divs = doc.select("div.newer-older-area div.content").toArray(new Element[0]);
 
         setOlderNewerLink(doc, divs[0], newerPostDto);
@@ -571,7 +595,7 @@ public class ShowPostService {
         shareButtonElem.dataset().put("href", url);
     }
 
-    private static void renderTitleList(ServiceContext context, Document doc, String blogId, List<BlogPostDto> blogPostDtoList,
+    private static void renderTitleList(Document doc, String blogId, List<BlogPostDto> blogPostDtoList,
                                         int page, int postCount) {
         Element ulElem = doc.getElementById("blog-post-title-list");
         Element firstLi = ulElem.getElementsByTag("li").first();
@@ -587,10 +611,10 @@ public class ShowPostService {
             titleSpan.text(dto.title);
             ulElem.appendChild(newLi);
         }
-        renderPagenation(doc, "list", page, postCount);
+        renderPagenation(doc, "list", page, postCount, Constants.NUM_OF_BLOG_TITLES_PER_PAGE, null);
     }
 
-    private static void renderCommentList(ServiceContext context, Document doc, String blogId, List<CommentDto> commentDtoList,
+    private static void renderCommentList(Document doc, String blogId, List<CommentDto> commentDtoList,
                                         int page, int commentCount) {
         Element ulElem = doc.getElementById("blog-comment-list");
         Element firstLi = ulElem.getElementsByTag("li").first();
@@ -608,19 +632,123 @@ public class ShowPostService {
             posterSpan.text(dto.posterName);
             ulElem.appendChild(newLi);
         }
-        renderPagenation(doc, "commentlist", page, commentCount);
+        renderPagenation(doc, "commentlist", page, commentCount, Constants.NUM_OF_BLOG_TITLES_PER_PAGE, null);
     }
 
-    private static void renderPagenation(Document doc, String mode, int page, int totalCount) {
+    private static void renderSearchCondition(Document doc, List<String> keywords, boolean titleSearch, boolean contentSearch) {
+        String keywordsStr = String.join(" ", keywords);
+        Element spanElem = doc.getElementById("search-keyword");
+        spanElem.text(keywordsStr);
+
+        Element searchAreaDiv = doc.getElementById("main-search-area");
+        Element textElem = doc.getElementsByClass("search-input").first();
+        textElem.val(keywordsStr);
+        Element titleCheckElem = doc.getElementsByClass("search-title-check").first();
+        titleCheckElem.attr("checked", titleSearch);
+        Element contentCheckElem = doc.getElementsByClass("search-content-check").first();
+        contentCheckElem.attr("checked", contentSearch);
+    }
+
+    private static void renderSearchTitleList(ServiceContext context, Document doc, String blogId, List<String> keywords,
+                                              int page) throws Exception {
+        Element listElem = doc.getElementById("blog-search-list");
+        Element firstItem = listElem.getElementsByClass("blog-search-item").first();
+        Element templateItem = firstItem.clone();
+        templateItem.getElementsByClass("blog-search-item-content").first().remove();
+        listElem.empty();
+
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPostsByTitle(context.getDbAccessInvoker(), blogId, keywords,
+                                                    (page - 1) * Constants.NUM_OF_BLOG_SEARCH_PER_PAGE,
+                                                          Constants.NUM_OF_BLOG_SEARCH_PER_PAGE);
+        if (dtoList.size() == 0) {
+            renderNoResult(doc, listElem);
+            return;
+        }
+        int totalCount = dtoList.get(0).totalCount;
+        for (BlogPostSearchDto dto : dtoList) {
+            Element newItem = templateItem.clone();
+            Element aElem = newItem.getElementsByTag("a").first();
+            aElem.attr("href", "post/" + dto.blogPostId);
+            Element dateSpan = aElem.getElementsByClass("search-list-date").first();
+            dateSpan.text(dto.postedDate.format(postedDateFormatter));
+            Element titleSpan = aElem.getElementsByClass("search-list-title").first();
+            titleSpan.html(Util.boldifyHitString(dto.title, keywords));
+            listElem.appendChild(newItem);
+        }
+        String searchStr = getSearchString(keywords, true, false);
+        renderPagenation(doc, "searchlist", page, totalCount, Constants.NUM_OF_BLOG_SEARCH_PER_PAGE, searchStr);
+    }
+
+    private static void renderSearchList(ServiceContext context, Document doc, String blogId, List<String> keywords,
+                                         int page, boolean titleSearch) throws Exception {
+        Element listElem = doc.getElementById("blog-search-list");
+        Element firstItem = listElem.getElementsByClass("blog-search-item").first();
+        Element templateItem = firstItem.clone();
+        listElem.empty();
+
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPosts(context.getDbAccessInvoker(), blogId, keywords, titleSearch,
+                (page - 1) * Constants.NUM_OF_BLOG_SEARCH_PER_PAGE,
+                Constants.NUM_OF_BLOG_SEARCH_PER_PAGE);
+        if (dtoList.size() == 0) {
+            renderNoResult(doc, listElem);
+            return;
+        }
+        int totalCount = dtoList.get(0).totalCount;
+        for (BlogPostSearchDto dto : dtoList) {
+            Element newItem = templateItem.clone();
+            Element aElem = newItem.getElementsByTag("a").first();
+            aElem.attr("href", "post/" + dto.blogPostId);
+            Element dateSpan = aElem.getElementsByClass("search-list-date").first();
+            dateSpan.text(dto.postedDate.format(postedDateFormatter));
+            Element titleSpan = aElem.getElementsByClass("search-list-title").first();
+            titleSpan.html(Util.boldifyHitString(dto.title, keywords));
+            Element contentElem = newItem.getElementsByClass("blog-search-item-content").first();
+            String summaryText = getSummary(dto.bodyConcat, MarkupConverterMode.SUMMARY_TEXT, Integer.MAX_VALUE);
+            String neighborhood = Util.getKeywordNeighborhood(summaryText, keywords);
+            contentElem.html(Util.boldifyHitString(neighborhood, keywords));
+
+            listElem.appendChild(newItem);
+        }
+        String searchStr = getSearchString(keywords, titleSearch, true);
+        renderPagenation(doc, "searchlist", page, totalCount, Constants.NUM_OF_BLOG_SEARCH_PER_PAGE, searchStr);
+    }
+
+    static String getSearchString(List<String> keywords, boolean titleSearch, boolean contentSearch) throws Exception {
+        String joined = String.join(" ", keywords);
+        String escaped = URLEncoder.encode(joined, StandardCharsets.UTF_8.toString());
+        String mode;
+        if (titleSearch && !contentSearch) {
+            mode = "title";
+        } else if (!titleSearch && contentSearch) {
+            mode = "content";
+        } else {
+            mode = "both";
+        }
+
+        return "&q=" + escaped + "&mode=" + mode;
+    }
+
+    private static void renderNoResult(Document doc, Element parent) {
+        Element pElem = doc.createElement("p");
+        pElem.text("見つかりませんでした。");
+        parent.appendChild(pElem);
+        Element pagenationDiv = doc.getElementById("pagenation-area");
+        pagenationDiv.remove();
+    }
+
+    private static void renderPagenation(Document doc, String mode, int page, int totalCount, int numOfPerPage,
+                                         String searchStr) {
         int[] pageCountBuf = new int[1];
-        int startPage = Util.calcPagenationStart(totalCount, page, Constants.NUM_OF_BLOG_TITLES_PER_PAGE, pageCountBuf);
+        int startPage = Util.calcPagenationStart(totalCount, page, numOfPerPage, pageCountBuf);
         int pageCount = pageCountBuf[0];
 
         Element divElem = doc.getElementById("pagenation-area");
         divElem.empty();
         if (page > 1) {
             Element prevA = doc.createElement("a");
-            prevA.attr("href", mode + "?page=" + (page - 1));
+            prevA.attr("href", mode + "?page=" + (page - 1) + (searchStr != null ? searchStr : ""));
             prevA.text("≪");
             divElem.appendChild(prevA);
         }
@@ -630,14 +758,14 @@ public class ShowPostService {
                 numElem = doc.createElement("span");
             } else {
                 numElem = doc.createElement("a");
-                numElem.attr("href", mode + "?page=" + (startPage + i));
+                numElem.attr("href", mode + "?page=" + (startPage + i) + (searchStr != null ? searchStr : ""));
             }
             numElem.text(" " + (startPage + i));
             divElem.appendChild(numElem);
         }
         if (page < pageCount) {
             Element nextA = doc.createElement("a");
-            nextA.attr("href", mode + "?page=" + (page + 1));
+            nextA.attr("href", mode + "?page=" + (page + 1) + (searchStr != null ? searchStr : ""));
             nextA.text(" ≫");
             divElem.appendChild(nextA);
         }

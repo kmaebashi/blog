@@ -76,9 +76,9 @@ class BlogPostDbAccessTest {
 
         List<String> keywordList = new ArrayList<>();
         keywordList.add("煌蓮玖");
-        keywordList.add("翔禄");
-        List<BlogPostDto> dtoList
-                = BlogPostDbAccess.searchBlogPostsByTitle(invoker,"kmaebashiblog", keywordList);
+        keywordList.add("翔禄冴");
+        List<BlogPostSearchDto> dtoList
+                = BlogPostDbAccess.searchBlogPostsByTitle(invoker,"kmaebashiblog", keywordList, 0, 100);
         assertEquals(1, dtoList.size());
     }
 
@@ -90,7 +90,7 @@ class BlogPostDbAccessTest {
         List<String> keywordList = new ArrayList<>();
         keywordList.add("鳳斎瑠");
         List<BlogPostSearchDto> dtoList
-                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true);
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true, 0, 100);
         assertEquals(3, dtoList.size());
     }
 
@@ -102,7 +102,7 @@ class BlogPostDbAccessTest {
         List<String> keywordList = new ArrayList<>();
         keywordList.add("鳳斎瑠");
         List<BlogPostSearchDto> dtoList
-                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false);
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false, 0, 100);
         assertEquals(2, dtoList.size());
     }
 
@@ -113,11 +113,11 @@ class BlogPostDbAccessTest {
 
         List<String> keywordList = new ArrayList<>();
         keywordList.add("煌蓮玖");
-        keywordList.add("翔禄");
+        keywordList.add("翔禄冴");
 
         List<BlogPostSearchDto> dtoList
-                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true);
-        assertEquals(2, dtoList.size());
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, true, 0, 100);
+        assertEquals(1, dtoList.size());
     }
 
     @Test
@@ -127,9 +127,9 @@ class BlogPostDbAccessTest {
 
         List<String> keywordList = new ArrayList<>();
         keywordList.add("煌蓮玖");
-        keywordList.add("翔禄");
+        keywordList.add("翔禄冴");
         List<BlogPostSearchDto> dtoList
-                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false);
-        assertEquals(2, dtoList.size());
+                = BlogPostDbAccess.searchBlogPosts(invoker,"kmaebashiblog", keywordList, false, 0, 100);
+        assertEquals(1, dtoList.size());
     }
 }
