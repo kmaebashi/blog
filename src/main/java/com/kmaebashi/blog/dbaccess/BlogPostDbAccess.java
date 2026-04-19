@@ -701,28 +701,37 @@ public class BlogPostDbAccess {
         return invoker.invoke((context) -> {
             String sql1 = """
                     SELECT
-                      BLOG_POST_ID,
-                      TITLE,
-                      POSTED_DATE,
-                      BODY_CONCAT,
+                      BP.BLOG_POST_ID,
+                      BP.TITLE,
+                      BP.POSTED_DATE,
+                      CONCAT_WS('／', SEC.BODY_CONCAT, PH.CAPTION_CONCAT) AS BODY_CONCAT,
                       COUNT(*) OVER() AS TOTAL_COUNT
-                    FROM  (SELECT
-                          BP.BLOG_POST_ID,
-                          BP.TITLE,
-                          BP.POSTED_DATE,
-                          ARRAY_TO_STRING(ARRAY_AGG("body" ORDER BY "section_seq"), '／') AS BODY_CONCAT
-                        FROM BLOG_POSTS BP
-                        LEFT OUTER JOIN BLOG_POST_SECTIONS SEC
-                          ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
-                        WHERE
-                          BP.BLOG_ID = :BLOG_ID
-                        GROUP BY (BP.BLOG_POST_ID, BP.TITLE, BP.POSTED_DATE)
-                      ) CONCAT
+                    FROM BLOG_POSTS BP
+                    LEFT OUTER JOIN (
+                      SELECT
+                        BLOG_POST_ID,
+                        ARRAY_TO_STRING(ARRAY_AGG(BODY ORDER BY SECTION_SEQ), '／') AS BODY_CONCAT
+                      FROM BLOG_POST_SECTIONS
+                      GROUP BY BLOG_POST_ID
+                    ) SEC
+                      ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
+                    LEFT OUTER JOIN (
+                      SELECT
+                        BLOG_POST_ID,
+                        ARRAY_TO_STRING(ARRAY_AGG(CAPTION ORDER BY SECTION_NUMBER, DISPLAY_ORDER), '／') AS CAPTION_CONCAT
+                      FROM PHOTOS
+                      WHERE
+                        BLOG_POST_ID IS NOT NULL
+                      GROUP BY BLOG_POST_ID
+                    ) PH
+                      ON BP.BLOG_POST_ID = PH.BLOG_POST_ID
                     WHERE
+                      BP.BLOG_ID = :BLOG_ID
+                      AND
                     """;
             String sql2 = """
                     ORDER BY
-                      POSTED_DATE DESC
+                      BP.POSTED_DATE DESC
                     OFFSET :OFFSET LIMIT :LIMIT
                     """;
 
@@ -741,7 +750,7 @@ public class BlogPostDbAccess {
                     if (i > 0) {
                         sb.append("AND ");
                     }
-                    sb.append("TITLE LIKE :KEYWORD" + i + " ");
+                    sb.append("BP.TITLE LIKE :KEYWORD" + i + " ");
                 }
                 sb.append(") OR (");
             }
@@ -749,7 +758,7 @@ public class BlogPostDbAccess {
                 if (i > 0) {
                     sb.append("AND ");
                 }
-                sb.append("BODY_CONCAT LIKE :KEYWORD" + i + " ");
+                sb.append("CONCAT_WS('／', SEC.BODY_CONCAT, PH.CAPTION_CONCAT) LIKE :KEYWORD" + i + " ");
             }
             if (titleSearch) {
                 sb.append(")");

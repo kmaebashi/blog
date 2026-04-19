@@ -83,7 +83,7 @@ class MarkupConverterTest {
 
         String expectedFootnote = "\r\n<hr>\r\n" +
                 "<ul class=\"footnote\">\r\n" +
-                "<li><a name=\"footnote1\">※1</a>なんとかの脚注です。<br>\r\n" +
+                "<li><a name=\"footnote1\">※1</a> なんとかの脚注です。<br>\r\n" +
                 "改行のあと。<a href=\"https://kmaebashi.com\">https://kmaebashi.com</a>\r\n" +
                 "</ul>\r\n";
         assertEquals(expected, converted);

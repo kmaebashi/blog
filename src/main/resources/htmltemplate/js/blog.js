@@ -17,6 +17,10 @@ window.onload = function() {
 
   const searchButton = document.getElementById("search-button-sidebar");
   searchButton.onclick = sidebarSearchClicked;
+  const searchInput = document.querySelector("#sidebar-search-area .search-input");
+  if (searchInput != null) {
+    searchInput.onkeydown = searchInputKeyDown;
+  }
 }
 
 function parseDateYYYYMMDD(str) {
@@ -31,6 +35,17 @@ function sidebarSearchClicked(e) {
   const parentDiv = document.getElementById("sidebar-search-area");
 
   redirectToSearchPage(parentDiv);
+}
+
+function searchInputKeyDown(e) {
+  if (e.key !== "Enter") {
+    return;
+  }
+  e.preventDefault();
+  const searchAreaDiv = e.target.closest("#sidebar-search-area, #main-search-area");
+  if (searchAreaDiv != null) {
+    redirectToSearchPage(searchAreaDiv);
+  }
 }
 
 function redirectToSearchPage(searchAreaDiv) {
