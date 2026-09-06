@@ -76,4 +76,12 @@ class ImageUtilTest {
 
         ImageUtil.convertImage(srcImage, destImage, 500, "jpg");
     }
+
+    @Test
+    void convertImageTest009() throws Exception {
+        Path srcImage = Paths.get("test_input/test_image/gyophoto.JPG");
+        Path destImage = Paths.get("test_output/resized_image/gyophoto.JPG");
+
+        ImageUtil.convertImage(srcImage, destImage, 500, "jpg");
+    }
 }

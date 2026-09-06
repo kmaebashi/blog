@@ -135,7 +135,7 @@ public class ImageUtil {
             // 次の2バイト: 0xff 0xe1 APP1(Application Marker Segment 1)のマーカー
             // 次の4バイト: APP1領域のサイズ(ビッグエンディアン)
             // 次の6バイト: Exifのマーカー('E', 'x', 'i', 'f', 00, 00)
-            byte[] headersByte = new byte[12];
+            byte[] headersByte = new byte[2];
             int[] headers;
             int app1Size;
             if (inStream.read(headersByte) != headersByte.length) {
@@ -145,40 +145,61 @@ public class ImageUtil {
             if (headers[0] != 0xff || headers[1] != 0xd8) {
                 throw new BadRequestException("JPEGのファイル形式が不正です");
             }
-            if (headers[2] != 0xff || headers[3] != 0xe1) {
+            int[] app1Data = null;
+            for (;;) {
+                byte[] appNHeaderBytes = new byte[2];
+                if (inStream.read(appNHeaderBytes) != appNHeaderBytes.length) {
+                    return orientation;
+                }
+                int[] appNHeader = unsignedByteArrayToIntArray(appNHeaderBytes);
+                if (appNHeader[0] != 0xff || !(appNHeader[1] >= 0xe0 && appNHeader[1] <= 0xef)) {
+                    return orientation;
+                }
+                byte[] appNSizeBytes = new byte[2];
+                if (inStream.read(appNSizeBytes) != appNSizeBytes.length) {
+                    throw new BadRequestException("JPEGのファイル形式が不正です");
+                }
+                int[] appNSizeIntArray = unsignedByteArrayToIntArray(appNSizeBytes);
+                // sizeはサイズ自身の2バイトを含むので、データ本体のサイズはsize - 2
+                int appNSize = read2Byte(appNSizeIntArray, 0, ByteOrder.BIG_ENDIAN) - 2;
+                byte[] appNDataBytes = new byte[appNSize];
+                if (inStream.read(appNDataBytes) != appNDataBytes.length) {
+                    throw new BadRequestException("JPEGのファイル形式が不正です");
+                }
+                int[] appNData = unsignedByteArrayToIntArray(appNDataBytes);
+                if (appNHeader[1] == 0xe1) {
+                    // APP1
+                    app1Data = appNData;
+                    break;
+                }
+            }
+            if (app1Data == null) {
                 return orientation;
             }
-            app1Size = read2Byte(headers, 4, ByteOrder.BIG_ENDIAN);
-            if (headers[6] != (byte)'E'
-                    || headers[7] != (byte)'x'
-                    || headers[8] != (byte)'i'
-                    || headers[9] != (byte)'f'
-                    || headers[10] != 0x00 || headers[11] != 0x00) {
+            if (app1Data[0] != (byte)'E'
+                    || app1Data[1] != (byte)'x'
+                    || app1Data[2] != (byte)'i'
+                    || app1Data[3] != (byte)'f'
+                    || app1Data[4] != 0x00 || app1Data[5] != 0x00) {
                 return orientation;
             }
-            byte[] app1DataByte = new byte[app1Size];
-            if (inStream.read(app1DataByte) < app1Size) {
-                throw new BadRequestException("JPEGのファイル形式が不正です");
-            }
 
-            // Javaのbyteは符号付きでまともにバイトを扱えないので、intの配列に変換する。
-            int[] app1Data = unsignedByteArrayToIntArray(app1DataByte);
-
-            // APP1の冒頭8バイトはTIFFヘッダ
+            // APP1のEXIFヘッダの次の8バイトはTIFFヘッダ
             // 先頭2バイト: バイトオーダーを示す。
             //　　　　　　　0x49, 0x49('I', 'I')...リトルエンディアン(Intelの略らしい)
             //　　　　　　　0x4d, 0x4d('M', 'M')...ビッグエンディアン(Motorolaの略らしい)
             // 次の2バイト: 0x00, 0x2a TIFF識別コード(固定)
             // 次の4バイト:
+            final int EXIF_HEADER_SIZE = 6;
             ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN; // make compiler happy
-            if (app1Data[0] == 0x49 && app1Data[1] == 0x49) {
+            if (app1Data[EXIF_HEADER_SIZE] == 0x49 && app1Data[EXIF_HEADER_SIZE + 1] == 0x49) {
                 byteOrder = ByteOrder.LITTLE_ENDIAN;
-            } else if (app1Data[0] == 0x4d && app1Data[1] == 0x4d) {
+            } else if (app1Data[EXIF_HEADER_SIZE] == 0x4d && app1Data[EXIF_HEADER_SIZE + 1] == 0x4d) {
                 byteOrder = ByteOrder.BIG_ENDIAN;
             } else {
                 throw new BadRequestException("JPEGのファイル形式が不正です");
             }
-            int tiffVersion = read2Byte(app1Data, 2, byteOrder);
+            int tiffVersion = read2Byte(app1Data, EXIF_HEADER_SIZE + 2, byteOrder);
             if (tiffVersion != 0x002a) {
                 throw new BadRequestException("JPEGのファイル形式が不正です");
             }
@@ -187,13 +208,13 @@ public class ImageUtil {
             // これを含め、以後出てくるオフセットは、すべてAPP1の先頭を起点とする。
             // ここまで、0th IFDのオフセットを含めて8バイト使っているので、
             // その続きとなる0th IFDの先頭のオフセットはたいてい8。
-            int offsetOf0thIFD = read4Byte(app1Data, 4, byteOrder);
+            int offsetOf0thIFD = read4Byte(app1Data, EXIF_HEADER_SIZE + 4, byteOrder);
 
             // 0th IFDのタグの数を取得(先頭2バイト)
-            int numOf0thIFDTags = read2Byte(app1Data, offsetOf0thIFD, byteOrder);
+            int numOf0thIFDTags = read2Byte(app1Data, EXIF_HEADER_SIZE + offsetOf0thIFD, byteOrder);
 
             // 8はTIFFヘッダ、2はタグの数の分
-            int offset = 8 + 2;
+            int offset = EXIF_HEADER_SIZE + 8 + 2;
             for (int i = 0; i < numOf0thIFDTags; i++) {
                 // ひとつのIFDタグ(固定長12バイト)の構成は以下の通り。
                 // 先頭2バイト: タグNo。定義はExifの仕様書(JEITA CP-3451)を参照。

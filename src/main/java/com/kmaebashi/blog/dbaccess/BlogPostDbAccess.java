@@ -2,6 +2,7 @@ package com.kmaebashi.blog.dbaccess;
 
 import com.kmaebashi.blog.common.BlogPostStatus;
 import com.kmaebashi.blog.dto.*;
+import com.kmaebashi.blog.util.Log;
 import com.kmaebashi.dbutil.NamedParameterPreparedStatement;
 import com.kmaebashi.dbutil.ResultSetMapper;
 import com.kmaebashi.nctfw.DbAccessInvoker;
@@ -477,7 +478,7 @@ public class BlogPostDbAccess {
                       BLOG_ID = :BLOG_ID
                       AND POSTED_DATE < :POSTED_DATE
                       AND STATUS = 2
-                    ORDER BY BLOG_POST_ID DESC
+                    ORDER BY POSTED_DATE DESC
                     LIMIT 1
                     """;
             NamedParameterPreparedStatement npps
@@ -504,7 +505,7 @@ public class BlogPostDbAccess {
                       BLOG_ID = :BLOG_ID
                       AND POSTED_DATE > :POSTED_DATE
                       AND STATUS = 2
-                    ORDER BY BLOG_POST_ID ASC
+                    ORDER BY POSTED_DATE ASC
                     LIMIT 1
                     """;
             NamedParameterPreparedStatement npps
@@ -664,6 +665,7 @@ public class BlogPostDbAccess {
                     FROM BLOG_POSTS
                     WHERE
                       BLOG_ID = :BLOG_ID
+                      AND STATUS = 2
                     """;
             String sql2 = """
                     ORDER BY
@@ -704,32 +706,43 @@ public class BlogPostDbAccess {
                       BP.BLOG_POST_ID,
                       BP.TITLE,
                       BP.POSTED_DATE,
-                      CONCAT_WS('／', SEC.BODY_CONCAT, PH.CAPTION_CONCAT) AS BODY_CONCAT,
+                      SEARCH_SRC.BODY_CONCAT,
                       COUNT(*) OVER() AS TOTAL_COUNT
                     FROM BLOG_POSTS BP
                     LEFT OUTER JOIN (
                       SELECT
                         BLOG_POST_ID,
-                        ARRAY_TO_STRING(ARRAY_AGG(BODY ORDER BY SECTION_SEQ), '／') AS BODY_CONCAT
-                      FROM BLOG_POST_SECTIONS
+                        ARRAY_TO_STRING(ARRAY_AGG(TEXT_PART
+                                                  ORDER BY SECTION_ORDER, ITEM_TYPE, DISPLAY_ORDER), '／') AS BODY_CONCAT
+                      FROM (
+                        SELECT
+                          BLOG_POST_ID,
+                          SECTION_SEQ + 1 AS SECTION_ORDER,
+                          0 AS ITEM_TYPE,
+                          0 AS DISPLAY_ORDER,
+                          BODY AS TEXT_PART
+                        FROM BLOG_POST_SECTIONS
+                        UNION ALL
+                        SELECT
+                          BLOG_POST_ID,
+                          SECTION_NUMBER AS SECTION_ORDER,
+                          1 AS ITEM_TYPE,
+                          COALESCE(DISPLAY_ORDER, 0) AS DISPLAY_ORDER,
+                          CAPTION AS TEXT_PART
+                        FROM PHOTOS
+                        WHERE
+                          BLOG_POST_ID IS NOT NULL
+                      ) SEARCH_PARTS
                       GROUP BY BLOG_POST_ID
-                    ) SEC
-                      ON BP.BLOG_POST_ID = SEC.BLOG_POST_ID
-                    LEFT OUTER JOIN (
-                      SELECT
-                        BLOG_POST_ID,
-                        ARRAY_TO_STRING(ARRAY_AGG(CAPTION ORDER BY SECTION_NUMBER, DISPLAY_ORDER), '／') AS CAPTION_CONCAT
-                      FROM PHOTOS
-                      WHERE
-                        BLOG_POST_ID IS NOT NULL
-                      GROUP BY BLOG_POST_ID
-                    ) PH
-                      ON BP.BLOG_POST_ID = PH.BLOG_POST_ID
+                    ) SEARCH_SRC
+                      ON BP.BLOG_POST_ID = SEARCH_SRC.BLOG_POST_ID
                     WHERE
                       BP.BLOG_ID = :BLOG_ID
-                      AND
+                      AND BP.STATUS = 2
+                      AND (
                     """;
             String sql2 = """
+                    )
                     ORDER BY
                       BP.POSTED_DATE DESC
                     OFFSET :OFFSET LIMIT :LIMIT
@@ -758,7 +771,7 @@ public class BlogPostDbAccess {
                 if (i > 0) {
                     sb.append("AND ");
                 }
-                sb.append("CONCAT_WS('／', SEC.BODY_CONCAT, PH.CAPTION_CONCAT) LIKE :KEYWORD" + i + " ");
+                sb.append("SEARCH_SRC.BODY_CONCAT LIKE :KEYWORD" + i + " ");
             }
             if (titleSearch) {
                 sb.append(")");
