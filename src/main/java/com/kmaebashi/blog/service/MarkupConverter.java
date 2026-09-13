@@ -42,6 +42,7 @@ public class MarkupConverter {
         FOOTNOTE_END,
         LINK_START,
         LINK_COM_START,
+        YOUTUBE_START,
         B_START,
         B_END
     }
@@ -96,6 +97,7 @@ public class MarkupConverter {
         new MarkDef(Mark.LINK_START, "https://", null,false),
         new MarkDef(Mark.LINK_COM_START, "[http://", null, false),
         new MarkDef(Mark.LINK_COM_START, "[https://", null, false),
+        new MarkDef(Mark.YOUTUBE_START, "[youtube ", null, true),
         new MarkDef(Mark.B_START, "[b]", "<b>", false),
         new MarkDef(Mark.B_END, "[/b]", "</b>", false),
     };
@@ -114,7 +116,7 @@ public class MarkupConverter {
         try {
             this.inParagraph = false;
             this.setBr = false;
-            src = src.replace("\\r", "");
+            src = src.replace("\r", "");
             StringBuilder mainSb = new StringBuilder();
             this.targetSb = mainSb;
             StringBuilder currentFootnoteSb = new StringBuilder();
@@ -150,6 +152,27 @@ public class MarkupConverter {
                             writeTag(md.htmlStr + Constants.CRLF);
                             i += markLenBuf[0];
                             status = Status.IN_PRE;
+                        } else if (md.type == Mark.YOUTUBE_START) {
+                            int closeBracketIndex = src.indexOf(']', i + markLenBuf[0]);
+                            String videoId = closeBracketIndex >= 0
+                                    ? getYoutubeVideoId(src.substring(i + markLenBuf[0], closeBracketIndex))
+                                    : null;
+                            if (videoId == null) {
+                                startLine();
+                                writeText("" + src.charAt(i));
+                                i++;
+                                status = Status.IN_LINE;
+                            } else {
+                                endParagraph();
+                                if (listStack.size() > 0) {
+                                    subListLevel(listStack.size(), listStack);
+                                }
+                                outputYoutube(videoId);
+                                i = closeBracketIndex + 1;
+                                if (i < src.length() && src.charAt(i) == '\n') {
+                                    i++;
+                                }
+                            }
                         } else if (md.type == Mark.LI_UL1 || md.type == Mark.LI_UL2 || md.type == Mark.LI_UL3
                                 || md.type == Mark.LI_OL1 || md.type == Mark.LI_OL2 || md.type == Mark.LI_OL3) {
                             endParagraph();
@@ -330,6 +353,35 @@ public class MarkupConverter {
 
     private void outputFootnoteLink(int number) {
         writeTag("<sup><a href=\"#footnote" + number + "\">※" + number + "</a></sup>");
+    }
+
+    private void outputYoutube(String videoId) {
+        writeTag("<iframe" + Constants.CRLF
+                + "    width=\"560\"" + Constants.CRLF
+                + "    height=\"315\"" + Constants.CRLF
+                + "    src=\"https://www.youtube.com/embed/" + videoId + "\"" + Constants.CRLF
+                + "    title=\"YouTube video player\"" + Constants.CRLF
+                + "    frameborder=\"0\"" + Constants.CRLF
+                + "    allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"" + Constants.CRLF
+                + "    allowfullscreen>" + Constants.CRLF
+                + "</iframe>" + Constants.CRLF);
+    }
+
+    private static String getYoutubeVideoId(String parameters) {
+        if (!parameters.startsWith("id=")) {
+            return null;
+        }
+        String videoId = parameters.substring(3);
+        if (videoId.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < videoId.length(); i++) {
+            char ch = videoId.charAt(i);
+            if (!Character.isLetterOrDigit(ch) && ch != '-' && ch != '_') {
+                return null;
+            }
+        }
+        return videoId;
     }
 
     private void startLine() {

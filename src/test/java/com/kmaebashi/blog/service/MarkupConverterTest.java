@@ -223,6 +223,43 @@ class MarkupConverterTest {
         String converted = converter.convert(src);
     }
 
+    @Test
+    void convertTest005() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String src = "あい\r\n[https://kmaebashi.com title=K.Maebashi's home page]うえお";
+        String converted = converter.convert(src);
+    }
+
+    @Test
+    void convertYoutube() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String converted = converter.convert("前の段落\r\n[youtube id=dQw4w9WgXcQ]\r\n次の段落");
+
+        assertEquals("<p>前の段落\r\n</p>\r\n"
+                + "<iframe\r\n"
+                + "    width=\"560\"\r\n"
+                + "    height=\"315\"\r\n"
+                + "    src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"\r\n"
+                + "    title=\"YouTube video player\"\r\n"
+                + "    frameborder=\"0\"\r\n"
+                + "    allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"\r\n"
+                + "    allowfullscreen>\r\n"
+                + "</iframe>\r\n"
+                + "<p>次の段落</p>\r\n", converted);
+    }
+
+    @Test
+    void convertInvalidYoutubeIdAsText() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String converted = converter.convert("[youtube id=\"><script>]");
+
+        assertEquals("<p>[youtube id=&quot;&gt;&lt;script&gt;]</p>\r\n", converted);
+    }
+
+
 
     @Test
     void getLinkUrlTest001() {
