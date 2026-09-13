@@ -5,6 +5,23 @@ document.addEventListener("DOMContentLoaded", function(event) {
   postCommentButton.onclick = postComment;
 });
 
+window.addEventListener("load", () => {
+  console.log("loaded");
+  document.querySelectorAll(".twitter-embed").forEach(embed => {
+    const tweetId = embed.dataset.tweetId;
+    console.log("tweetId.." + tweetId);
+    const widget = embed.querySelector(".x-widget");
+    console.log("widget.." + widget);
+    const fallback = embed.querySelector(".x-fallback");
+
+    twttr.widgets.createTweet(tweetId, widget).then(result => {
+      if (result) {
+        fallback.remove();
+      }
+    });
+  });
+});
+
 function postComment() {
   const postData = {};
   const paths = location.pathname.split("/");

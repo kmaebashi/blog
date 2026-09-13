@@ -268,6 +268,33 @@ class MarkupConverterTest {
     }
 
     @Test
+    void convertTweet() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String converted = converter.convert("[tweet id=1234567890123456789]");
+
+        assertEquals("<div class=\"twitter-embed\"\r\n"
+                + "    data-tweet-id=1234567890123456789>\r\n"
+                + "  <div class=\"x-widget\">\r\n"
+                + "  </div>\r\n"
+                + "  <div class=\"x-fallback\">\r\n"
+                + "    <a href=\"https://x.com/foo/status/1234567890123456789\">\r\n"
+                + "      Twitterでツイートを見る\r\n"
+                + "    </a>\r\n"
+                + "  </div>\r\n"
+                + "</div>\r\n", converted);
+    }
+
+    @Test
+    void convertInvalidTweetIdAsText() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String converted = converter.convert("[tweet id=123\"><script>]");
+
+        assertEquals("<p>[tweet id=123&quot;&gt;&lt;script&gt;]</p>\r\n", converted);
+    }
+
+    @Test
     void convertInvalidYoutubeIdAsText() {
         MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 

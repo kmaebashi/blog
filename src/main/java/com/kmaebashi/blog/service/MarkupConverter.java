@@ -44,6 +44,7 @@ public class MarkupConverter {
         LINK_COM_START,
         YOUTUBE_START,
         YOUTUBE_SHORT_START,
+        TWEET_START,
         B_START,
         B_END
     }
@@ -100,6 +101,7 @@ public class MarkupConverter {
         new MarkDef(Mark.LINK_COM_START, "[https://", null, false),
         new MarkDef(Mark.YOUTUBE_SHORT_START, "[youtube_s ", null, true),
         new MarkDef(Mark.YOUTUBE_START, "[youtube ", null, true),
+        new MarkDef(Mark.TWEET_START, "[tweet ", null, true),
         new MarkDef(Mark.B_START, "[b]", "<b>", false),
         new MarkDef(Mark.B_END, "[/b]", "</b>", false),
     };
@@ -170,6 +172,27 @@ public class MarkupConverter {
                                     subListLevel(listStack.size(), listStack);
                                 }
                                 outputYoutube(videoId, md.type == Mark.YOUTUBE_SHORT_START);
+                                i = closeBracketIndex + 1;
+                                if (i < src.length() && src.charAt(i) == '\n') {
+                                    i++;
+                                }
+                            }
+                        } else if (md.type == Mark.TWEET_START) {
+                            int closeBracketIndex = src.indexOf(']', i + markLenBuf[0]);
+                            String tweetId = closeBracketIndex >= 0
+                                    ? getTweetId(src.substring(i + markLenBuf[0], closeBracketIndex))
+                                    : null;
+                            if (tweetId == null) {
+                                startLine();
+                                writeText("" + src.charAt(i));
+                                i++;
+                                status = Status.IN_LINE;
+                            } else {
+                                endParagraph();
+                                if (listStack.size() > 0) {
+                                    subListLevel(listStack.size(), listStack);
+                                }
+                                outputTweet(tweetId);
                                 i = closeBracketIndex + 1;
                                 if (i < src.length() && src.charAt(i) == '\n') {
                                     i++;
@@ -386,6 +409,35 @@ public class MarkupConverter {
             }
         }
         return videoId;
+    }
+
+    private void outputTweet(String tweetId) {
+        writeTag("<div class=\"twitter-embed\"" + Constants.CRLF
+                + "    data-tweet-id=" + tweetId + ">" + Constants.CRLF
+                + "  <div class=\"x-widget\">" + Constants.CRLF
+                + "  </div>" + Constants.CRLF
+                + "  <div class=\"x-fallback\">" + Constants.CRLF
+                + "    <a href=\"https://x.com/foo/status/" + tweetId + "\">" + Constants.CRLF
+                + "      Twitterでツイートを見る" + Constants.CRLF
+                + "    </a>" + Constants.CRLF
+                + "  </div>" + Constants.CRLF
+                + "</div>" + Constants.CRLF);
+    }
+
+    private static String getTweetId(String parameters) {
+        if (!parameters.startsWith("id=")) {
+            return null;
+        }
+        String tweetId = parameters.substring(3);
+        if (tweetId.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < tweetId.length(); i++) {
+            if (!Character.isDigit(tweetId.charAt(i))) {
+                return null;
+            }
+        }
+        return tweetId;
     }
 
     private void startLine() {
