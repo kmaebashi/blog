@@ -251,6 +251,23 @@ class MarkupConverterTest {
     }
 
     @Test
+    void convertYoutubeShort() {
+        MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
+
+        String converted = converter.convert("[youtube_s id=dQw4w9WgXcQ]");
+
+        assertEquals("<iframe\r\n"
+                + "    width=\"315\"\r\n"
+                + "    height=\"560\"\r\n"
+                + "    src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"\r\n"
+                + "    title=\"YouTube video player\"\r\n"
+                + "    frameborder=\"0\"\r\n"
+                + "    allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"\r\n"
+                + "    allowfullscreen>\r\n"
+                + "</iframe>\r\n", converted);
+    }
+
+    @Test
     void convertInvalidYoutubeIdAsText() {
         MarkupConverter converter = new MarkupConverter(MarkupConverterMode.NORMAL);
 

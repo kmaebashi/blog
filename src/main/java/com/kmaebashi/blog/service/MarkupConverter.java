@@ -43,6 +43,7 @@ public class MarkupConverter {
         LINK_START,
         LINK_COM_START,
         YOUTUBE_START,
+        YOUTUBE_SHORT_START,
         B_START,
         B_END
     }
@@ -97,6 +98,7 @@ public class MarkupConverter {
         new MarkDef(Mark.LINK_START, "https://", null,false),
         new MarkDef(Mark.LINK_COM_START, "[http://", null, false),
         new MarkDef(Mark.LINK_COM_START, "[https://", null, false),
+        new MarkDef(Mark.YOUTUBE_SHORT_START, "[youtube_s ", null, true),
         new MarkDef(Mark.YOUTUBE_START, "[youtube ", null, true),
         new MarkDef(Mark.B_START, "[b]", "<b>", false),
         new MarkDef(Mark.B_END, "[/b]", "</b>", false),
@@ -152,7 +154,7 @@ public class MarkupConverter {
                             writeTag(md.htmlStr + Constants.CRLF);
                             i += markLenBuf[0];
                             status = Status.IN_PRE;
-                        } else if (md.type == Mark.YOUTUBE_START) {
+                        } else if (md.type == Mark.YOUTUBE_START || md.type == Mark.YOUTUBE_SHORT_START) {
                             int closeBracketIndex = src.indexOf(']', i + markLenBuf[0]);
                             String videoId = closeBracketIndex >= 0
                                     ? getYoutubeVideoId(src.substring(i + markLenBuf[0], closeBracketIndex))
@@ -167,7 +169,7 @@ public class MarkupConverter {
                                 if (listStack.size() > 0) {
                                     subListLevel(listStack.size(), listStack);
                                 }
-                                outputYoutube(videoId);
+                                outputYoutube(videoId, md.type == Mark.YOUTUBE_SHORT_START);
                                 i = closeBracketIndex + 1;
                                 if (i < src.length() && src.charAt(i) == '\n') {
                                     i++;
@@ -355,10 +357,12 @@ public class MarkupConverter {
         writeTag("<sup><a href=\"#footnote" + number + "\">※" + number + "</a></sup>");
     }
 
-    private void outputYoutube(String videoId) {
+    private void outputYoutube(String videoId, boolean shortVideo) {
+        int width = shortVideo ? 315 : 560;
+        int height = shortVideo ? 560 : 315;
         writeTag("<iframe" + Constants.CRLF
-                + "    width=\"560\"" + Constants.CRLF
-                + "    height=\"315\"" + Constants.CRLF
+                + "    width=\"" + width + "\"" + Constants.CRLF
+                + "    height=\"" + height + "\"" + Constants.CRLF
                 + "    src=\"https://www.youtube.com/embed/" + videoId + "\"" + Constants.CRLF
                 + "    title=\"YouTube video player\"" + Constants.CRLF
                 + "    frameborder=\"0\"" + Constants.CRLF
